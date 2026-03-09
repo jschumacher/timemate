@@ -6,13 +6,21 @@ interface TimezoneRowProps {
   city: CityTimezone;
   now: Date;
   onRemove: () => void;
+  hoverOffsetHours?: number | null;
 }
 
-const TOTAL_HOURS = 96; // 4 days
-const HOURS_BEFORE_NOW = 24;
-const HOUR_WIDTH = 28; // px per hour
+export const TOTAL_HOURS = 96;
+export const HOURS_BEFORE_NOW = 24;
+export const HOUR_WIDTH = 28;
+export const NOW_PIXEL_OFFSET = 300; // px from left edge where "now" sits
 
-export function TimezoneRow({ city, now, onRemove }: TimezoneRowProps) {
+export function getTimelineTranslateX(now: Date): number {
+  const minutesFraction = now.getMinutes() / 60;
+  const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
+  return -nowPosition + NOW_PIXEL_OFFSET;
+}
+
+export function TimezoneRow({ city, now, onRemove, hoverOffsetHours }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const date = formatDate(city.timezone);
   const offset = getUtcOffset(city.timezone);
@@ -40,9 +48,19 @@ export function TimezoneRow({ city, now, onRemove }: TimezoneRowProps) {
     return segs;
   }, [city.timezone, now]);
 
-  // Now line position: HOURS_BEFORE_NOW hours from start + fractional minutes
-  const minutesFraction = now.getMinutes() / 60;
-  const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
+  const translateX = getTimelineTranslateX(now);
+
+  // Compute hover time label
+  const hoverTimeLabel = useMemo(() => {
+    if (hoverOffsetHours == null) return null;
+    const hoverDate = new Date(now.getTime() + hoverOffsetHours * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: city.timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(hoverDate);
+  }, [hoverOffsetHours, now, city.timezone]);
 
   return (
     <div className="group relative">
@@ -70,12 +88,12 @@ export function TimezoneRow({ city, now, onRemove }: TimezoneRowProps) {
       </div>
 
       {/* Timeline */}
-      <div className="relative overflow-hidden rounded-md h-10 bg-timeline-bar">
+      <div className="relative overflow-hidden rounded-md h-10 bg-timeline-bar timeline-bar">
         <div
           className="absolute top-0 h-full flex"
           style={{
             width: `${TOTAL_HOURS * HOUR_WIDTH}px`,
-            transform: `translateX(${-nowPosition + 300}px)`,
+            transform: `translateX(${translateX}px)`,
           }}
         >
           {segments.map((seg, i) => (
@@ -86,13 +104,11 @@ export function TimezoneRow({ city, now, onRemove }: TimezoneRowProps) {
               }`}
               style={{ width: `${HOUR_WIDTH}px` }}
             >
-              {/* Hour label */}
               {seg.hour % 3 === 0 && (
                 <span className="absolute bottom-0.5 left-0.5 text-[9px] text-muted-foreground/60 font-mono leading-none">
                   {seg.hour.toString().padStart(2, "0")}
                 </span>
               )}
-              {/* Date label */}
               {seg.label && (
                 <span className="absolute -top-0.5 left-0.5 text-[8px] text-muted-foreground/80 font-medium whitespace-nowrap leading-none">
                   {seg.label}
@@ -100,15 +116,19 @@ export function TimezoneRow({ city, now, onRemove }: TimezoneRowProps) {
               )}
             </div>
           ))}
-
-          {/* Now line */}
-          <div
-            className="absolute top-0 h-full w-0.5 bg-now z-10"
-            style={{ left: `${nowPosition}px` }}
-          >
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-now" />
-          </div>
         </div>
+
+        {/* Hover time label inside the bar */}
+        {hoverTimeLabel != null && hoverOffsetHours != null && (
+          <div
+            className="absolute top-0 h-full flex items-center pointer-events-none z-20"
+            style={{ left: `${NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH}px` }}
+          >
+            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono text-accent-foreground bg-accent px-1.5 py-0.5 rounded whitespace-nowrap">
+              {hoverTimeLabel}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
