@@ -358,7 +358,7 @@ const Index = () => {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-6 gap-y-1">
+                <div className="flex flex-col gap-1">
                   {pinnedSummary.map((s) => (
                     <div key={`${s.city}-${s.timezone}`} className="flex items-center gap-2 text-sm py-0.5">
                       <span className="shrink-0">{s.flag}</span>
