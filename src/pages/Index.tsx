@@ -116,14 +116,28 @@ const Index = () => {
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_LINE_X) / HOUR_WIDTH : null;
+  // Hover offset accounts for scroll: the pixel position maps to a different time when scrolled
+  const scrolledNowLineX = NOW_LINE_X + scrollOffsetHours * HOUR_WIDTH;
+  const rawHoverOffsetHours = hoverX != null ? (hoverX - scrolledNowLineX) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
     return snapToQuarter(rawHoverOffsetHours, now);
   }, [rawHoverOffsetHours, now]);
-  const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
+  const snappedHoverX = hoverOffsetHours != null ? scrolledNowLineX + hoverOffsetHours * HOUR_WIDTH : null;
 
-  const pinnedXPositions = pinnedOffsets.map((o) => NOW_LINE_X + o * HOUR_WIDTH);
+  const pinnedXPositions = pinnedOffsets.map((o) => scrolledNowLineX + o * HOUR_WIDTH);
+
+  // Date label for current scroll position
+  const scrollDateLabel = useMemo(() => {
+    const localTzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const d = new Date(now.getTime() - scrollOffsetHours * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: localTzName,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(d);
+  }, [now, scrollOffsetHours]);
 
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
