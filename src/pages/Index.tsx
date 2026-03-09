@@ -374,7 +374,7 @@ const Index = () => {
 
                 <div className="flex flex-wrap gap-0 divide-x divide-border/50">
                   {pinnedOptions.map((opt, optIdx) => (
-                    <div key={optIdx} className="px-4 py-3 max-w-[360px]">
+                    <div key={optIdx} className="px-4 py-3 max-w-[460px]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold text-primary">
                           Option {optIdx + 1}
