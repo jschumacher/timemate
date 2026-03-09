@@ -37,8 +37,9 @@
     --radius: 0.75rem;
 
     --timeline-bar: 220 14% 14%;
-    --timeline-night: 220 16% 12%;
-    --timeline-day: 220 8% 26%;
+    --timeline-night: 220 16% 10%;
+    --timeline-shoulder: 220 12% 18%;
+    --timeline-work: 220 8% 28%;
     --now-line: 280 50% 60%;
     --hover-line: 142 60% 50%;
 
