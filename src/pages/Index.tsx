@@ -312,7 +312,7 @@ const Index = () => {
         </div>
 
          {/* Animated date display */}
-         <div className="mb-6 flex items-baseline gap-3">
+         <div className="mb-6 flex items-baseline gap-1.5">
            <RollingText text={viewingDate.day} className="text-4xl font-bold tracking-tight text-foreground" />
            <RollingText text={viewingDate.month} className="text-lg font-semibold text-foreground/80" />
            <RollingText text={viewingDate.year} className="text-lg font-semibold text-foreground/80" />
