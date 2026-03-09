@@ -256,7 +256,7 @@ const Index = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   }, [locations, pinnedOffsets]);
 
-  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
+  const pinnedX = pinnedOffsetHours != null ? scrolledNowLineX + pinnedOffsetHours * HOUR_WIDTH : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
