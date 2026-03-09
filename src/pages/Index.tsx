@@ -488,11 +488,14 @@ const Index = () => {
                         {opt.cities.map((s) => (
                           <div
                             key={`${s.city}-${s.timezone}`}
-                            className="flex items-center gap-3 text-sm py-0.5"
+                            className="flex items-center gap-3 text-sm py-1"
                           >
                             <span className="shrink-0">{s.flag}</span>
                             <span className="font-medium text-foreground w-32 truncate">{s.city}</span>
-                            <span className="font-mono font-bold text-foreground tabular-nums">{s.time}</span>
+                            <div className="flex flex-col">
+                              <span className="font-mono font-bold text-foreground tabular-nums">{s.time}</span>
+                              <span className="text-[10px] text-muted-foreground">{s.date}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
