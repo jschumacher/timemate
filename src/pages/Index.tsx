@@ -99,6 +99,7 @@ const Index = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [didDrag, setDidDrag] = useState(false);
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -194,14 +195,21 @@ const Index = () => {
     if (!containerRef.current) return;
 
     // Handle drag
-    if (isDragging && dragStartRef.current) {
+    if (dragStartRef.current) {
       const dx = e.clientX - dragStartRef.current.x;
-      const hoursShift = dx / HOUR_WIDTH;
-      setScrollOffsetHours(
-        Math.max(-168, Math.min(168, dragStartRef.current.scrollAtStart + hoursShift))
-      );
-      setHoverX(null);
-      return;
+      // Only start dragging after 5px threshold
+      if (!isDragging && Math.abs(dx) > 5) {
+        setIsDragging(true);
+        setDidDrag(true);
+      }
+      if (isDragging) {
+        const hoursShift = dx / HOUR_WIDTH;
+        setScrollOffsetHours(
+          Math.max(-168, Math.min(168, dragStartRef.current.scrollAtStart + hoursShift))
+        );
+        setHoverX(null);
+        return;
+      }
     }
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -218,23 +226,20 @@ const Index = () => {
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x >= TIMELINE_START_X && x <= rect.width - 112) {
-      setIsDragging(true);
       dragStartRef.current = { x: e.clientX, scrollAtStart: scrollOffsetHours };
-      setHoverX(null);
+      setDidDrag(false);
       e.preventDefault();
     }
   }, [scrollOffsetHours]);
 
   const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-      dragStartRef.current = null;
-    }
-  }, [isDragging]);
+    setIsDragging(false);
+    dragStartRef.current = null;
+  }, []);
 
   // Global mouse up listener to catch releases outside the container
   useEffect(() => {
-    if (isDragging) {
+    if (dragStartRef.current !== null || isDragging) {
       const handleGlobalUp = () => {
         setIsDragging(false);
         dragStartRef.current = null;
@@ -260,7 +265,7 @@ const Index = () => {
   }, []);
 
   const handleClick = useCallback(() => {
-    if (isDragging) return; // Don't pin if we were dragging
+    if (didDrag) return; // Don't pin if we were dragging
     if (hoverOffsetHours == null) return;
     const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
     if (existingIdx !== -1) {
@@ -269,7 +274,7 @@ const Index = () => {
       if (pinnedOffsets.length >= 5) return;
       setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
     }
-  }, [hoverOffsetHours, pinnedOffsets, isDragging]);
+  }, [hoverOffsetHours, pinnedOffsets, didDrag]);
 
   const removeOption = useCallback((index: number) => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
