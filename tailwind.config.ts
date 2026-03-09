@@ -54,7 +54,8 @@ export default {
         timeline: {
           bar: "hsl(var(--timeline-bar))",
           night: "hsl(var(--timeline-night))",
-          day: "hsl(var(--timeline-day))",
+          shoulder: "hsl(var(--timeline-shoulder))",
+          work: "hsl(var(--timeline-work))",
         },
         now: "hsl(var(--now-line))",
         "hover-line": "hsl(var(--hover-line))",

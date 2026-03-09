@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
-import { MeetingSuggestions } from "@/components/MeetingSuggestions";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 
@@ -19,10 +18,17 @@ function loadLocations(): CityTimezone[] {
   return [];
 }
 
+function snapToQuarter(rawOffsetHours: number, now: Date): number {
+  const hoverMs = now.getTime() + rawOffsetHours * 60 * 60 * 1000;
+  const snappedMs = Math.round(hoverMs / (15 * 60 * 1000)) * (15 * 60 * 1000);
+  return (snappedMs - now.getTime()) / (60 * 60 * 1000);
+}
+
 const Index = () => {
   const [locations, setLocations] = useState<CityTimezone[]>(loadLocations);
   const [now, setNow] = useState(new Date());
   const [hoverX, setHoverX] = useState<number | null>(null);
+  const [pinnedOffsetHours, setPinnedOffsetHours] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +36,6 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Persist locations
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
   }, [locations]);
@@ -38,16 +43,18 @@ const Index = () => {
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  // Snap hover to absolute 15-minute clock increments (0, 15, 30, 45)
+  // Snap hover
   const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
-    const hoverMs = now.getTime() + rawHoverOffsetHours * 60 * 60 * 1000;
-    const snappedMs = Math.round(hoverMs / (15 * 60 * 1000)) * (15 * 60 * 1000);
-    return (snappedMs - now.getTime()) / (60 * 60 * 1000);
+    return snapToQuarter(rawHoverOffsetHours, now);
   }, [rawHoverOffsetHours, now]);
   const snappedHoverX = hoverOffsetHours != null
     ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH
+    : null;
+
+  const pinnedX = pinnedOffsetHours != null
+    ? NOW_PIXEL_OFFSET + pinnedOffsetHours * HOUR_WIDTH
     : null;
 
   const hoverLocalTime = useMemo(() => {
@@ -60,6 +67,17 @@ const Index = () => {
       hour12: true,
     }).format(hoverDate);
   }, [hoverOffsetHours, now, localTz]);
+
+  const pinnedLocalTime = useMemo(() => {
+    if (pinnedOffsetHours == null) return null;
+    const d = new Date(now.getTime() + pinnedOffsetHours * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: localTz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  }, [pinnedOffsetHours, now, localTz]);
 
   function addLocation(city: CityTimezone) {
     if (locations.length >= 5) return;
@@ -80,6 +98,16 @@ const Index = () => {
   const handleMouseLeave = useCallback(() => {
     setHoverX(null);
   }, []);
+
+  const handleClick = useCallback(() => {
+    if (hoverOffsetHours == null) return;
+    // Toggle pin: if clicking same spot, unpin
+    if (pinnedOffsetHours != null && Math.abs(pinnedOffsetHours - hoverOffsetHours) < 0.01) {
+      setPinnedOffsetHours(null);
+    } else {
+      setPinnedOffsetHours(hoverOffsetHours);
+    }
+  }, [hoverOffsetHours, pinnedOffsetHours]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -109,11 +137,12 @@ const Index = () => {
         ) : (
           <div
             ref={containerRef}
-            className="relative"
+            className="relative cursor-crosshair"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onClick={handleClick}
           >
-            {/* Line labels row - above the timelines */}
+            {/* Line labels row */}
             <div className="relative h-10 mb-2">
               {/* Now label */}
               <div
@@ -127,6 +156,19 @@ const Index = () => {
                 <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
               </div>
 
+              {/* Pinned label (always visible when set) */}
+              {pinnedX != null && pinnedLocalTime && hoverX == null && (
+                <div
+                  className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                  style={{ left: `${pinnedX}px`, transform: "translateX(-50%)" }}
+                >
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
+                    <span className="text-xs font-mono font-bold text-hover-line">{pinnedLocalTime}</span>
+                    <span className="text-[9px] text-hover-line/70">pinned</span>
+                  </div>
+                </div>
+              )}
+
               {/* Hover label */}
               {snappedHoverX != null && hoverLocalTime && (
                 <div
@@ -135,7 +177,7 @@ const Index = () => {
                 >
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
                     <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
-                    <span className="text-[9px] text-hover-line/70">your local time</span>
+                    <span className="text-[9px] text-hover-line/70">click to pin</span>
                   </div>
                 </div>
               )}
@@ -150,18 +192,26 @@ const Index = () => {
                   now={now}
                   onRemove={() => removeLocation(loc)}
                   hoverOffsetHours={hoverOffsetHours}
-                  isFirst={i === 0}
+                  pinnedOffsetHours={pinnedOffsetHours}
                 />
               ))}
             </div>
 
-            {/* Unified "now" line spanning all rows */}
+            {/* Unified "now" line */}
             <div
               className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
               style={{ left: `${NOW_PIXEL_OFFSET}px` }}
             />
 
-            {/* Hover cursor line spanning all rows */}
+            {/* Pinned line (always visible) */}
+            {pinnedX != null && (
+              <div
+                className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
+                style={{ left: `${pinnedX}px` }}
+              />
+            )}
+
+            {/* Hover cursor line */}
             {snappedHoverX != null && (
               <div
                 className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
@@ -169,10 +219,6 @@ const Index = () => {
               />
             )}
           </div>
-        )}
-
-        {locations.length >= 2 && (
-          <MeetingSuggestions locations={sortByTimezone(locations)} />
         )}
       </div>
     </div>

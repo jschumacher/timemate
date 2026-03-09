@@ -186,8 +186,16 @@ export function getHourInTimezone(timezone: string, date: Date): number {
   return parseInt(str, 10);
 }
 
+export type HourPeriod = "work" | "shoulder" | "night";
+
+export function getHourPeriod(hour: number): HourPeriod {
+  if (hour >= 9 && hour < 17) return "work";
+  if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 22)) return "shoulder";
+  return "night";
+}
+
 export function isNightHour(hour: number): boolean {
-  return hour < 7 || hour >= 21;
+  return hour < 7 || hour >= 22;
 }
 
 export function searchCities(query: string): CityTimezone[] {
