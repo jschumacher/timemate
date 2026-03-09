@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
+import { MeetingSuggestions } from "@/components/MeetingSuggestions";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 
@@ -168,6 +169,10 @@ const Index = () => {
               />
             )}
           </div>
+        )}
+
+        {locations.length >= 2 && (
+          <MeetingSuggestions locations={sortByTimezone(locations)} />
         )}
       </div>
     </div>
