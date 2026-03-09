@@ -37,9 +37,10 @@
     --radius: 0.75rem;
 
     --timeline-bar: 220 14% 14%;
-    --timeline-night: 220 20% 8%;
-    --timeline-day: 220 10% 22%;
-    --now-line: 142 60% 50%;
+    --timeline-night: 220 16% 12%;
+    --timeline-day: 220 8% 26%;
+    --now-line: 280 50% 60%;
+    --hover-line: 142 60% 50%;
 
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 210 20% 92%;
@@ -60,5 +61,35 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .bg-now {
+    background-color: hsl(var(--now-line));
+  }
+  .text-now {
+    color: hsl(var(--now-line));
+  }
+  .border-now {
+    border-color: hsl(var(--now-line));
+  }
+  .bg-hover-line {
+    background-color: hsl(var(--hover-line));
+  }
+  .text-hover-line {
+    color: hsl(var(--hover-line));
+  }
+  .border-hover-line {
+    border-color: hsl(var(--hover-line));
+  }
+  .bg-timeline-bar {
+    background-color: hsl(var(--timeline-bar));
+  }
+  .bg-timeline-night {
+    background-color: hsl(var(--timeline-night));
+  }
+  .bg-timeline-day {
+    background-color: hsl(var(--timeline-day));
   }
 }
