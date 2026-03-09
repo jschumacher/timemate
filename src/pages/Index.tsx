@@ -195,14 +195,21 @@ const Index = () => {
     if (!containerRef.current) return;
 
     // Handle drag
-    if (isDragging && dragStartRef.current) {
+    if (dragStartRef.current) {
       const dx = e.clientX - dragStartRef.current.x;
-      const hoursShift = dx / HOUR_WIDTH;
-      setScrollOffsetHours(
-        Math.max(-168, Math.min(168, dragStartRef.current.scrollAtStart + hoursShift))
-      );
-      setHoverX(null);
-      return;
+      // Only start dragging after 5px threshold
+      if (!isDragging && Math.abs(dx) > 5) {
+        setIsDragging(true);
+        setDidDrag(true);
+      }
+      if (isDragging) {
+        const hoursShift = dx / HOUR_WIDTH;
+        setScrollOffsetHours(
+          Math.max(-168, Math.min(168, dragStartRef.current.scrollAtStart + hoursShift))
+        );
+        setHoverX(null);
+        return;
+      }
     }
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -219,19 +226,16 @@ const Index = () => {
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x >= TIMELINE_START_X && x <= rect.width - 112) {
-      setIsDragging(true);
       dragStartRef.current = { x: e.clientX, scrollAtStart: scrollOffsetHours };
-      setHoverX(null);
+      setDidDrag(false);
       e.preventDefault();
     }
   }, [scrollOffsetHours]);
 
   const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-      dragStartRef.current = null;
-    }
-  }, [isDragging]);
+    setIsDragging(false);
+    dragStartRef.current = null;
+  }, []);
 
   // Global mouse up listener to catch releases outside the container
   useEffect(() => {
