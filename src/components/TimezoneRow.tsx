@@ -32,11 +32,10 @@ const PERIOD_CLASS: Record<HourPeriod, string> = {
   night: "bg-timeline-night",
 };
 
-export function getTimelineTranslateX(now: Date): number {
+export function getTimelineTranslateX(now: Date, scrollOffsetHours: number = 0): number {
   const minutesFraction = now.getMinutes() / 60;
   const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
-  // Translate so that the absolute "now" timestamp is rendered under the shared marker line.
-  return -nowPosition + NOW_IN_TIMELINE_X;
+  return -nowPosition + NOW_IN_TIMELINE_X + scrollOffsetHours * HOUR_WIDTH;
 }
 
 function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {
