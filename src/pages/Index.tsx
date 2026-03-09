@@ -98,6 +98,8 @@ const Index = () => {
   const [copiedTime, setCopiedTime] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
