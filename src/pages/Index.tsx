@@ -121,10 +121,10 @@ const Index = () => {
               </div>
 
               {/* Hover label */}
-              {hoverX != null && hoverLocalTime && (
+              {snappedHoverX != null && hoverLocalTime && (
                 <div
                   className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                  style={{ left: `${hoverX}px`, transform: "translateX(-50%)" }}
+                  style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
                 >
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
                     <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
