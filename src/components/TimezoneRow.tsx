@@ -48,7 +48,7 @@ function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): s
   }).format(d);
 }
 
-export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours }: TimezoneRowProps) {
+export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours, scrollOffsetHours = 0 }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const offset = getUtcOffset(city.timezone);
 
