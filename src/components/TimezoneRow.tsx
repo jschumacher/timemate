@@ -125,7 +125,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
               >
                 {seg.hour % 3 === 0 && (
                   <span className="absolute bottom-0.5 left-0.5 text-[9px] text-muted-foreground/60 font-mono leading-none">
-                    {seg.hour.toString().padStart(2, "0")}
+                    {(seg.hour % 12 || 12).toString()}
                   </span>
                 )}
                 {seg.label && (
