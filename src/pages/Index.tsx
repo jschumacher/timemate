@@ -274,7 +274,7 @@ const Index = () => {
       if (pinnedOffsets.length >= 5) return;
       setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
     }
-  }, [hoverOffsetHours, pinnedOffsets, isDragging]);
+  }, [hoverOffsetHours, pinnedOffsets, didDrag]);
 
   const removeOption = useCallback((index: number) => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
