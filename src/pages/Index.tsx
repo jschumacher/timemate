@@ -285,25 +285,44 @@ const Index = () => {
           </div>
         ) : (
           <>
+            {/* Scroll date indicator + reset button */}
+            {Math.abs(scrollOffsetHours) > 1 && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Viewing: {scrollDateLabel}
+                </span>
+                <button
+                  onClick={resetScroll}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Back to now
+                </button>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground/50 mb-2">Scroll to navigate dates</p>
+
             <div
               ref={containerRef}
               className="relative cursor-crosshair"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
+              onWheel={handleWheel}
             >
               {/* Line labels row */}
               <div className="relative h-10 mb-2">
-                {/* Now label */}
+                {/* Now label - moves with scroll */}
                 <div
                   className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                  style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
+                  style={{ left: `${scrolledNowLineX}px`, transform: "translateX(-50%)" }}
                 >
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
                     <Clock className="h-3 w-3 text-now" />
                     <span className="text-xs font-mono font-semibold text-now">{localTime}</span>
                   </div>
-                  <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
+                  <span className="text-[9px] text-now/70 mt-0.5">now</span>
                 </div>
 
                 {/* Pinned label (show last pinned when not hovering) */}
@@ -343,14 +362,15 @@ const Index = () => {
                     onRemove={() => removeLocation(loc)}
                     hoverOffsetHours={hoverOffsetHours}
                     pinnedOffsetHours={pinnedOffsetHours}
+                    scrollOffsetHours={scrollOffsetHours}
                   />
                 ))}
               </div>
 
-              {/* Unified "now" line */}
+              {/* Unified "now" line - moves with scroll */}
               <div
                 className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
-                style={{ left: `${NOW_LINE_X}px` }}
+                style={{ left: `${scrolledNowLineX}px` }}
               />
 
               {/* Pinned lines (all of them) */}
