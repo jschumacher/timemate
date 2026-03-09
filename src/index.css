@@ -96,10 +96,3 @@
   .bg-timeline-work {
     background-color: hsl(var(--timeline-work));
   }
-}
-    background-color: hsl(var(--timeline-night));
-  }
-  .bg-timeline-day {
-    background-color: hsl(var(--timeline-day));
-  }
-}
