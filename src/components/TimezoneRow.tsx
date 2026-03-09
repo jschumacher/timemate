@@ -13,9 +13,17 @@ interface TimezoneRowProps {
 export const TOTAL_HOURS = 96;
 export const HOURS_BEFORE_NOW = 24;
 export const HOUR_WIDTH = 28;
+
+// Layout constants used by the shared marker lines in Index
+export const LEFT_INFO_WIDTH = 180; // px
+export const COLUMN_GAP = 12; // matches `gap-3`
+
+// "Now" marker X position in the overall rows container
 export const NOW_PIXEL_OFFSET = 300;
-export const LEFT_INFO_WIDTH = 180;
-export const ROW_GAP = 12;
+
+// Derived positions
+export const TIMELINE_START_X = LEFT_INFO_WIDTH + COLUMN_GAP;
+export const NOW_IN_TIMELINE_X = NOW_PIXEL_OFFSET - TIMELINE_START_X;
 
 const PERIOD_CLASS: Record<HourPeriod, string> = {
   work: "bg-timeline-work",
@@ -26,7 +34,8 @@ const PERIOD_CLASS: Record<HourPeriod, string> = {
 export function getTimelineTranslateX(now: Date): number {
   const minutesFraction = now.getMinutes() / 60;
   const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
-  return -nowPosition + NOW_PIXEL_OFFSET;
+  // Translate so that the absolute "now" timestamp is rendered under the shared marker line.
+  return -nowPosition + NOW_IN_TIMELINE_X;
 }
 
 function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {

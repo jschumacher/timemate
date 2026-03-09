@@ -198,7 +198,7 @@ const Index = () => {
             {/* Unified "now" line */}
             <div
               className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
-              style={{ left: `${NOW_PIXEL_OFFSET}px` }}
+              style={{ left: `${NOW_LINE_X}px` }}
             />
 
             {/* Pinned line (always visible) */}
