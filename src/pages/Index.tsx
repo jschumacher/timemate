@@ -372,7 +372,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="divide-y divide-border/50">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] divide-x divide-border/50">
                   {pinnedOptions.map((opt, optIdx) => (
                     <div key={optIdx} className="px-4 py-3">
                       <div className="flex items-center justify-between mb-2">
@@ -387,16 +387,15 @@ const Index = () => {
                           <X className="h-3 w-3" />
                         </button>
                       </div>
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-0.5">
                         {opt.cities.map((s) => (
                           <div
                             key={`${s.city}-${s.timezone}`}
-                            className="flex items-center gap-3 text-sm py-0.5"
+                            className="flex items-center gap-2 text-sm py-0.5"
                           >
-                            <span className="text-base shrink-0">{s.flag}</span>
-                            <span className="font-medium text-foreground w-28 truncate">{s.city}</span>
-                            <span className="font-mono font-bold text-foreground tabular-nums w-24 text-right">{s.time}</span>
-                            <span className="text-muted-foreground text-xs">{s.date}</span>
+                            <span className="shrink-0">{s.flag}</span>
+                            <span className="font-medium text-foreground flex-1 truncate">{s.city}</span>
+                            <span className="font-mono font-bold text-foreground tabular-nums">{s.time}</span>
                           </div>
                         ))}
                       </div>

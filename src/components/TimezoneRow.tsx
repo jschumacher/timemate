@@ -93,16 +93,16 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     <div className="group relative">
       <div className="flex items-center gap-3">
         {/* Left info */}
-        <div className="flex items-center gap-2 w-[180px] shrink-0">
-          <span className="text-base">{city.flag}</span>
-          <div>
-            <div className="text-xs text-muted-foreground leading-tight">
+        <div className="flex items-center w-[180px] shrink-0">
+          <span className="text-base shrink-0">{city.flag}</span>
+          <div className="flex-1 min-w-0 ml-2">
+            <div className="text-xs text-muted-foreground leading-tight truncate">
               {city.city} · {offset}
             </div>
           </div>
           <button
             onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent ml-1"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent shrink-0 ml-auto"
           >
             <X className="h-3 w-3 text-muted-foreground" />
           </button>
