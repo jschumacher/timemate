@@ -99,6 +99,7 @@ const Index = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [didDrag, setDidDrag] = useState(false);
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
