@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
+import { RollingText } from "@/components/RollingText";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 import { toast } from "@/hooks/use-toast";
 
