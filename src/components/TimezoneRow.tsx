@@ -39,7 +39,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, isFirst }: 
           ? new Intl.DateTimeFormat("en-US", {
               timeZone: city.timezone,
               day: "numeric",
-              month: "long",
+              month: "short",
             }).format(d)
           : undefined;
       segs.push({ hour: h, date: d, isNight: isNightHour(h), label: dateStr });
