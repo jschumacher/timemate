@@ -265,7 +265,7 @@ const Index = () => {
   }, []);
 
   const handleClick = useCallback(() => {
-    if (isDragging) return; // Don't pin if we were dragging
+    if (didDrag) return; // Don't pin if we were dragging
     if (hoverOffsetHours == null) return;
     const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
     if (existingIdx !== -1) {
