@@ -74,7 +74,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     return segs;
   }, [city.timezone, now]);
 
-  const translateX = getTimelineTranslateX(now);
+  const translateX = getTimelineTranslateX(now, scrollOffsetHours);
 
   const hoverTimeLabel = useMemo(() => {
     if (hoverOffsetHours == null) return null;
