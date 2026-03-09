@@ -127,16 +127,15 @@ const Index = () => {
 
   const pinnedXPositions = pinnedOffsets.map((o) => scrolledNowLineX + o * HOUR_WIDTH);
 
-  // Date label for current scroll position
-  const scrollDateLabel = useMemo(() => {
+  // Split date into parts for animated display
+  const viewingDate = useMemo(() => {
     const localTzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const d = new Date(now.getTime() - scrollOffsetHours * 60 * 60 * 1000);
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone: localTzName,
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    }).format(d);
+    const weekday = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, weekday: "long" }).format(d);
+    const month = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, month: "long" }).format(d);
+    const day = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, day: "numeric" }).format(d);
+    const year = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, year: "numeric" }).format(d);
+    return { weekday, month, day, year, key: `${weekday}-${month}-${day}` };
   }, [now, scrollOffsetHours]);
 
   const hoverLocalTime = useMemo(() => {
@@ -261,16 +260,36 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-4 pt-10 pb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <img src="/favicon.png" alt="Timemate logo" className="h-8 w-8" />
-          <h1 className="text-2xl font-bold tracking-tight">Timemate</h1>
+        {/* Header row: logo + search */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <img src="/favicon.png" alt="Timemate logo" className="h-8 w-8" />
+            <h1 className="text-2xl font-bold tracking-tight">Timemate</h1>
+          </div>
+          <div className="w-72">
+            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Compare times across locations
-        </p>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-          <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
+        {/* Animated date display */}
+        <div className="mb-6 flex items-baseline gap-3">
+          <div className="relative overflow-hidden">
+            <div key={viewingDate.key} className="animate-fade-in flex items-baseline gap-2">
+              <span className="text-4xl font-bold tracking-tight text-foreground">{viewingDate.day}</span>
+              <span className="text-2xl font-semibold text-foreground/80">{viewingDate.month}</span>
+              <span className="text-lg text-muted-foreground">{viewingDate.year}</span>
+            </div>
+          </div>
+          <span className="text-sm text-muted-foreground">{viewingDate.weekday}</span>
+          {Math.abs(scrollOffsetHours) > 1 && (
+            <button
+              onClick={resetScroll}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-2"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Today
+            </button>
+          )}
         </div>
 
         {locations.length === 0 ? (
@@ -285,22 +304,6 @@ const Index = () => {
           </div>
         ) : (
           <>
-            {/* Scroll date indicator + reset button */}
-            {Math.abs(scrollOffsetHours) > 1 && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Viewing: {scrollDateLabel}
-                </span>
-                <button
-                  onClick={resetScroll}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Back to now
-                </button>
-              </div>
-            )}
-
             <p className="text-[10px] text-muted-foreground/50 mb-2">Scroll to navigate dates</p>
 
             <div
