@@ -97,3 +97,18 @@
     background-color: hsl(var(--timeline-work));
   }
 }
+
+@keyframes roll-in {
+  0% {
+    transform: translateY(var(--roll-from));
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.rolling-char {
+  animation: roll-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
