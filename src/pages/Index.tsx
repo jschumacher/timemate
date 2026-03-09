@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
-import { CityTimezone, formatTime } from "@/lib/timezone-data";
+import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 
 const STORAGE_KEY = "timezone-app-locations";
 
