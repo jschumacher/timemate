@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, Globe, Copy, Link, Check, X } from "lucide-react";
+import { Clock, Globe, Copy, Link, Check, X, Plus } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
@@ -28,7 +28,6 @@ function snapToQuarter(rawOffsetHours: number, now: Date): number {
   return (snappedMs - now.getTime()) / (60 * 60 * 1000);
 }
 
-/** Parse cities from URL: ?tz=Sydney|Australia/Sydney,Tokyo|Asia/Tokyo */
 function parseCitiesFromUrl(param: string | null): CityTimezone[] | null {
   if (!param) return null;
   try {
@@ -38,12 +37,8 @@ function parseCitiesFromUrl(param: string | null): CityTimezone[] | null {
     });
     return entries
       .map(({ city, timezone }) => {
-        // Try to find exact match in our database
-        const match = CITY_TIMEZONES.find(
-          (c) => c.city === city && c.timezone === timezone
-        );
+        const match = CITY_TIMEZONES.find((c) => c.city === city && c.timezone === timezone);
         if (match) return match;
-        // Fallback: construct a basic entry
         return { city, country: "", timezone, flag: "🌍" } as CityTimezone;
       })
       .filter((c) => c.timezone);
@@ -52,13 +47,13 @@ function parseCitiesFromUrl(param: string | null): CityTimezone[] | null {
   }
 }
 
-function buildShareUrl(locations: CityTimezone[], pinnedOffsetHours: number): string {
+function buildShareUrl(locations: CityTimezone[], pinnedOffsets: number[]): string {
   const base = window.location.origin + window.location.pathname;
   const tz = locations
     .map((l) => `${encodeURIComponent(l.city)}|${encodeURIComponent(l.timezone)}`)
     .join(",");
-  const pin = pinnedOffsetHours.toFixed(4);
-  return `${base}?tz=${tz}&pin=${pin}`;
+  const pins = pinnedOffsets.map((p) => p.toFixed(4)).join(",");
+  return `${base}?tz=${tz}&pin=${pins}`;
 }
 
 function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {
@@ -84,12 +79,12 @@ function formatDateAtOffset(timezone: string, now: Date, offsetHours: number): s
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCities = useMemo(() => parseCitiesFromUrl(searchParams.get("tz")), []);
-  const urlPin = useMemo(() => {
+  const urlPins = useMemo(() => {
     const p = searchParams.get("pin");
-    return p != null ? parseFloat(p) : null;
+    if (p == null) return [];
+    return p.split(",").map(Number).filter((n) => !isNaN(n));
   }, []);
 
-  // If loaded from a share URL, use URL cities but don't persist
   const isSharedView = urlCities != null && urlCities.length > 0;
 
   const [locations, setLocations] = useState<CityTimezone[]>(() => {
@@ -98,17 +93,19 @@ const Index = () => {
   });
   const [now, setNow] = useState(new Date());
   const [hoverX, setHoverX] = useState<number | null>(null);
-  const [pinnedOffsetHours, setPinnedOffsetHours] = useState<number | null>(urlPin);
+  const [pinnedOffsets, setPinnedOffsets] = useState<number[]>(urlPins);
   const [copiedTime, setCopiedTime] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Keep backward compat: expose first pinned offset for timeline row display
+  const pinnedOffsetHours = pinnedOffsets.length > 0 ? pinnedOffsets[pinnedOffsets.length - 1] : null;
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Only persist to localStorage if NOT a shared view
   useEffect(() => {
     if (!isSharedView) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
@@ -118,7 +115,6 @@ const Index = () => {
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  // Snap hover
   const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_LINE_X) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
@@ -126,7 +122,7 @@ const Index = () => {
   }, [rawHoverOffsetHours, now]);
   const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
 
-  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
+  const pinnedXPositions = pinnedOffsets.map((o) => NOW_LINE_X + o * HOUR_WIDTH);
 
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
@@ -152,17 +148,20 @@ const Index = () => {
 
   const sortedLocations = useMemo(() => sortByTimezone(locations), [locations]);
 
-  // Pinned summary data
-  const pinnedSummary = useMemo(() => {
-    if (pinnedOffsetHours == null || locations.length === 0) return null;
-    return sortedLocations.map((loc) => ({
-      city: loc.city,
-      flag: loc.flag,
-      time: formatTimeAtOffset(loc.timezone, now, pinnedOffsetHours),
-      date: formatDateAtOffset(loc.timezone, now, pinnedOffsetHours),
-      timezone: loc.timezone,
+  // Build summary for each pinned option
+  const pinnedOptions = useMemo(() => {
+    if (pinnedOffsets.length === 0 || locations.length === 0) return null;
+    return pinnedOffsets.map((offset) => ({
+      offset,
+      cities: sortedLocations.map((loc) => ({
+        city: loc.city,
+        flag: loc.flag,
+        time: formatTimeAtOffset(loc.timezone, now, offset),
+        date: formatDateAtOffset(loc.timezone, now, offset),
+        timezone: loc.timezone,
+      })),
     }));
-  }, [pinnedOffsetHours, now, sortedLocations, locations]);
+  }, [pinnedOffsets, now, sortedLocations, locations]);
 
   function addLocation(city: CityTimezone) {
     if (locations.length >= 5) return;
@@ -178,7 +177,6 @@ const Index = () => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    // Only show hover when over the timeline area (not city name or time columns)
     if (x >= TIMELINE_START_X && x <= rect.width - 112) {
       setHoverX(x);
     } else {
@@ -192,28 +190,42 @@ const Index = () => {
 
   const handleClick = useCallback(() => {
     if (hoverOffsetHours == null) return;
-    if (pinnedOffsetHours != null && Math.abs(pinnedOffsetHours - hoverOffsetHours) < 0.01) {
-      setPinnedOffsetHours(null);
+    // If clicking an already-pinned offset, remove it
+    const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
+    if (existingIdx !== -1) {
+      setPinnedOffsets(pinnedOffsets.filter((_, i) => i !== existingIdx));
     } else {
-      setPinnedOffsetHours(hoverOffsetHours);
+      // Add new pin (max 5 options)
+      if (pinnedOffsets.length >= 5) return;
+      setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
     }
-  }, [hoverOffsetHours, pinnedOffsetHours]);
+  }, [hoverOffsetHours, pinnedOffsets]);
+
+  const removeOption = useCallback((index: number) => {
+    setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleCopyTimes = useCallback(() => {
-    if (!pinnedSummary) return;
-    const lines = pinnedSummary.map((s) => `${s.flag} ${s.city}: ${s.time}, ${s.date}`);
-    navigator.clipboard.writeText(lines.join("\n"));
+    if (!pinnedOptions) return;
+    const lines = pinnedOptions.map((opt, i) => {
+      const header = `Option ${i + 1}`;
+      const cities = opt.cities.map((s) => `  ${s.flag} ${s.city}: ${s.time}, ${s.date}`);
+      return [header, ...cities].join("\n");
+    });
+    navigator.clipboard.writeText(lines.join("\n\n"));
     setCopiedTime(true);
     setTimeout(() => setCopiedTime(false), 2000);
-  }, [pinnedSummary]);
+  }, [pinnedOptions]);
 
   const handleCopyLink = useCallback(() => {
-    if (pinnedOffsetHours == null) return;
-    const url = buildShareUrl(locations, pinnedOffsetHours);
+    if (pinnedOffsets.length === 0) return;
+    const url = buildShareUrl(locations, pinnedOffsets);
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-  }, [locations, pinnedOffsetHours]);
+  }, [locations, pinnedOffsets]);
+
+  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -263,7 +275,7 @@ const Index = () => {
                   <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
                 </div>
 
-                {/* Pinned label (always visible when set) */}
+                {/* Pinned label (show last pinned when not hovering) */}
                 {pinnedX != null && pinnedLocalTime && hoverX == null && (
                   <div
                     className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
@@ -310,13 +322,14 @@ const Index = () => {
                 style={{ left: `${NOW_LINE_X}px` }}
               />
 
-              {/* Pinned line (always visible) */}
-              {pinnedX != null && (
+              {/* Pinned lines (all of them) */}
+              {pinnedXPositions.map((px, i) => (
                 <div
+                  key={i}
                   className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
-                  style={{ left: `${pinnedX}px` }}
+                  style={{ left: `${px}px` }}
                 />
-              )}
+              ))}
 
               {/* Hover cursor line */}
               {snappedHoverX != null && (
@@ -327,12 +340,12 @@ const Index = () => {
               )}
             </div>
 
-            {/* Pinned summary – compact inline */}
-            {pinnedSummary && (
+            {/* Pinned options panel */}
+            {pinnedOptions && pinnedOptions.length > 0 && (
               <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                    Pinned times
+                    Pinned times · {pinnedOptions.length} option{pinnedOptions.length > 1 ? "s" : ""}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -340,36 +353,53 @@ const Index = () => {
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedTime ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedTime ? "Copied" : "Times"}
+                      {copiedTime ? "Copied" : "Copy all"}
                     </button>
                     <button
                       onClick={handleCopyLink}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedLink ? <Check className="h-3 w-3" /> : <Link className="h-3 w-3" />}
-                      {copiedLink ? "Copied" : "Link"}
+                      {copiedLink ? "Copied" : "Share link"}
                     </button>
                     <button
-                      onClick={() => setPinnedOffsetHours(null)}
+                      onClick={() => setPinnedOffsets([])}
                       className="inline-flex items-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                      title="Unpin"
+                      title="Clear all"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-                  {pinnedSummary.map((s, i) => (
-                    <div
-                      key={`${s.city}-${s.timezone}`}
-                      className={`flex items-center gap-3 px-4 py-2.5 ${
-                        i < pinnedSummary.length - 1 ? "border-b border-border/50" : ""
-                      }`}
-                    >
-                      <span className="text-lg shrink-0">{s.flag}</span>
-                      <span className="font-medium text-foreground text-sm flex-1 truncate">{s.city}</span>
-                      <span className="font-mono font-bold text-foreground text-base tabular-nums">{s.time}</span>
-                      <span className="text-muted-foreground text-xs w-20 text-right">{s.date}</span>
+
+                <div className="divide-y divide-border/50">
+                  {pinnedOptions.map((opt, optIdx) => (
+                    <div key={optIdx} className="px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-primary">
+                          Option {optIdx + 1}
+                        </span>
+                        <button
+                          onClick={() => removeOption(optIdx)}
+                          className="inline-flex items-center p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                          title="Remove option"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {opt.cities.map((s) => (
+                          <div
+                            key={`${s.city}-${s.timezone}`}
+                            className="flex items-center gap-3 text-sm py-0.5"
+                          >
+                            <span className="text-base shrink-0">{s.flag}</span>
+                            <span className="font-medium text-foreground w-28 truncate">{s.city}</span>
+                            <span className="font-mono font-bold text-foreground tabular-nums w-24 text-right">{s.time}</span>
+                            <span className="text-muted-foreground text-xs">{s.date}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
