@@ -57,6 +57,7 @@ export default {
           day: "hsl(var(--timeline-day))",
         },
         now: "hsl(var(--now-line))",
+        "hover-line": "hsl(var(--hover-line))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
