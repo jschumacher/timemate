@@ -381,10 +381,10 @@ const Index = () => {
                         </span>
                         <button
                           onClick={() => removeOption(optIdx)}
-                          className="inline-flex items-center p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                          className="inline-flex items-center p-1 rounded-md text-muted-foreground hover:text-white hover:bg-destructive transition-colors"
                           title="Remove option"
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="flex flex-col gap-0.5">
