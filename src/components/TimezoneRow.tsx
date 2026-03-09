@@ -7,12 +7,13 @@ interface TimezoneRowProps {
   now: Date;
   onRemove: () => void;
   hoverOffsetHours?: number | null;
+  isFirst?: boolean;
 }
 
 export const TOTAL_HOURS = 96;
 export const HOURS_BEFORE_NOW = 24;
 export const HOUR_WIDTH = 28;
-export const NOW_PIXEL_OFFSET = 300; // px from left edge where "now" sits
+export const NOW_PIXEL_OFFSET = 300;
 
 export function getTimelineTranslateX(now: Date): number {
   const minutesFraction = now.getMinutes() / 60;
@@ -20,9 +21,8 @@ export function getTimelineTranslateX(now: Date): number {
   return -nowPosition + NOW_PIXEL_OFFSET;
 }
 
-export function TimezoneRow({ city, now, onRemove, hoverOffsetHours }: TimezoneRowProps) {
+export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, isFirst }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
-  const date = formatDate(city.timezone);
   const offset = getUtcOffset(city.timezone);
   const currentHour = getHourInTimezone(city.timezone, now);
   const isNight = isNightHour(currentHour);
@@ -38,9 +38,8 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours }: TimezoneR
         h === 0
           ? new Intl.DateTimeFormat("en-US", {
               timeZone: city.timezone,
-              weekday: "short",
-              month: "short",
               day: "numeric",
+              month: "long",
             }).format(d)
           : undefined;
       segs.push({ hour: h, date: d, isNight: isNightHour(h), label: dateStr });
@@ -56,79 +55,83 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours }: TimezoneR
     const hoverDate = new Date(now.getTime() + hoverOffsetHours * 60 * 60 * 1000);
     return new Intl.DateTimeFormat("en-US", {
       timeZone: city.timezone,
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
       hour12: true,
     }).format(hoverDate);
   }, [hoverOffsetHours, now, city.timezone]);
 
+  // Compute hover local time (user's timezone) for the first row header
+  const hoverLocalTime = useMemo(() => {
+    if (hoverOffsetHours == null) return null;
+    const hoverDate = new Date(now.getTime() + hoverOffsetHours * 60 * 60 * 1000);
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: localTz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(hoverDate);
+  }, [hoverOffsetHours, now]);
+
+  const hoverPixelX = hoverOffsetHours != null ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH : null;
+
   return (
     <div className="group relative">
-      {/* Info bar */}
-      <div className="flex items-center gap-4 mb-2 px-1">
-        <div className="flex items-center gap-2 min-w-[180px]">
-          <span className="text-lg">{city.flag}</span>
+      {/* Row: info left, timeline, hover time right */}
+      <div className="flex items-center gap-3">
+        {/* Left info */}
+        <div className="flex items-center gap-2 min-w-[140px] shrink-0">
+          <span className="text-base">{city.flag}</span>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xl font-bold text-foreground">{time}</span>
-              <span className={`w-2 h-2 rounded-full ${isNight ? "bg-muted-foreground" : "bg-primary"}`} />
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {city.city}, {city.country} · {offset}
+            <div className="text-xs text-muted-foreground leading-tight">
+              {city.city} · {offset}
             </div>
           </div>
-        </div>
-        <div className="text-xs text-muted-foreground hidden sm:block">{date}</div>
-        <button
-          onClick={onRemove}
-          className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-accent"
-        >
-          <X className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </div>
-
-      {/* Timeline */}
-      <div className="relative overflow-hidden rounded-md h-10 bg-timeline-bar timeline-bar">
-        <div
-          className="absolute top-0 h-full flex"
-          style={{
-            width: `${TOTAL_HOURS * HOUR_WIDTH}px`,
-            transform: `translateX(${translateX}px)`,
-          }}
-        >
-          {segments.map((seg, i) => (
-            <div
-              key={i}
-              className={`relative h-full flex-shrink-0 border-r border-border/30 ${
-                seg.isNight ? "bg-timeline-night" : "bg-timeline-day"
-              }`}
-              style={{ width: `${HOUR_WIDTH}px` }}
-            >
-              {seg.hour % 3 === 0 && (
-                <span className="absolute bottom-0.5 left-0.5 text-[9px] text-muted-foreground/60 font-mono leading-none">
-                  {seg.hour.toString().padStart(2, "0")}
-                </span>
-              )}
-              {seg.label && (
-                <span className="absolute -top-0.5 left-0.5 text-[8px] text-muted-foreground/80 font-medium whitespace-nowrap leading-none">
-                  {seg.label}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Hover time label inside the bar */}
-        {hoverTimeLabel != null && hoverOffsetHours != null && (
-          <div
-            className="absolute top-0 h-full flex items-center pointer-events-none z-20"
-            style={{ left: `${NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH}px` }}
+          <button
+            onClick={onRemove}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent ml-1"
           >
-            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono text-accent-foreground bg-accent px-1.5 py-0.5 rounded whitespace-nowrap">
-              {hoverTimeLabel}
-            </span>
+            <X className="h-3 w-3 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Timeline */}
+        <div className="relative overflow-hidden rounded-full h-8 bg-timeline-bar flex-1">
+          <div
+            className="absolute top-0 h-full flex"
+            style={{
+              width: `${TOTAL_HOURS * HOUR_WIDTH}px`,
+              transform: `translateX(${translateX}px)`,
+            }}
+          >
+            {segments.map((seg, i) => (
+              <div
+                key={i}
+                className={`relative h-full flex-shrink-0 ${
+                  seg.isNight ? "bg-timeline-night" : "bg-timeline-day"
+                }`}
+                style={{ width: `${HOUR_WIDTH}px` }}
+              >
+                {/* Date label centered in the bar */}
+                {seg.label && (
+                  <span className="absolute top-1/2 -translate-y-1/2 left-1 text-[10px] text-muted-foreground/70 font-medium whitespace-nowrap leading-none">
+                    {seg.label}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Hover time - large bold, positioned to the right */}
+        <div className="min-w-[100px] text-right shrink-0">
+          {hoverTimeLabel != null ? (
+            <span className="font-bold text-lg text-foreground font-mono">{hoverTimeLabel}</span>
+          ) : (
+            <span className="font-mono text-sm text-muted-foreground">{time}</span>
+          )}
+        </div>
       </div>
     </div>
   );

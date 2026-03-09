@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
@@ -15,7 +15,21 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const localTime = formatTime(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const localTime = formatTime(localTz);
+
+  // Local time at hover position
+  const hoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
+  const hoverLocalTime = useMemo(() => {
+    if (hoverOffsetHours == null) return null;
+    const hoverDate = new Date(now.getTime() + hoverOffsetHours * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: localTz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(hoverDate);
+  }, [hoverOffsetHours, now, localTz]);
 
   function addLocation(city: CityTimezone) {
     if (locations.length >= 5) return;
@@ -37,12 +51,9 @@ const Index = () => {
     setHoverX(null);
   }, []);
 
-  // Convert hover pixel X to hours offset from "now"
-  const hoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-4xl mx-auto px-4 pt-10 pb-6">
+      <div className="max-w-5xl mx-auto px-4 pt-10 pb-6">
         <div className="flex items-center gap-3 mb-1">
           <Globe className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">Timezone</h1>
@@ -52,11 +63,6 @@ const Index = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-            <Clock className="h-3.5 w-3.5 text-primary" />
-            <span className="text-sm font-mono font-semibold text-primary">{localTime}</span>
-            <span className="text-xs text-primary/70">local</span>
-          </div>
           <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
         </div>
 
@@ -73,32 +79,62 @@ const Index = () => {
         ) : (
           <div
             ref={containerRef}
-            className="relative space-y-6"
+            className="relative"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
-            {locations.map((loc, i) => (
-              <TimezoneRow
-                key={`${loc.city}-${loc.timezone}`}
-                city={loc}
-                now={now}
-                onRemove={() => removeLocation(i)}
-                hoverOffsetHours={hoverOffsetHours}
-              />
-            ))}
+            {/* Line labels row - above the timelines */}
+            <div className="relative h-10 mb-2">
+              {/* Now label */}
+              <div
+                className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                style={{ left: `${NOW_PIXEL_OFFSET}px`, transform: "translateX(-50%)" }}
+              >
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
+                  <Clock className="h-3 w-3 text-now" />
+                  <span className="text-xs font-mono font-semibold text-now">{localTime}</span>
+                </div>
+                <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
+              </div>
+
+              {/* Hover label */}
+              {hoverX != null && hoverLocalTime && (
+                <div
+                  className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                  style={{ left: `${hoverX}px`, transform: "translateX(-50%)" }}
+                >
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
+                    <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
+                    <span className="text-[9px] text-hover-line/70">your local time</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Timezone rows */}
+            <div className="space-y-4">
+              {locations.map((loc, i) => (
+                <TimezoneRow
+                  key={`${loc.city}-${loc.timezone}`}
+                  city={loc}
+                  now={now}
+                  onRemove={() => removeLocation(i)}
+                  hoverOffsetHours={hoverOffsetHours}
+                  isFirst={i === 0}
+                />
+              ))}
+            </div>
 
             {/* Unified "now" line spanning all rows */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-now z-30 pointer-events-none"
+              className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
               style={{ left: `${NOW_PIXEL_OFFSET}px` }}
-            >
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-now" />
-            </div>
+            />
 
             {/* Hover cursor line spanning all rows */}
             {hoverX != null && (
               <div
-                className="absolute top-0 bottom-0 w-px bg-muted-foreground/50 z-20 pointer-events-none"
+                className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
                 style={{ left: `${hoverX}px` }}
               />
             )}
