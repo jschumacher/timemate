@@ -329,22 +329,12 @@ const Index = () => {
 
             {/* Pinned summary – compact inline */}
             {pinnedSummary && (
-              <div className="mt-4 rounded-lg border border-border bg-card px-3 py-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider shrink-0">
+              <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                     Pinned
                   </span>
-                  <div className="flex items-center gap-3 flex-wrap flex-1">
-                    {pinnedSummary.map((s) => (
-                      <span key={`${s.city}-${s.timezone}`} className="inline-flex items-center gap-1.5 text-sm">
-                        <span>{s.flag}</span>
-                        <span className="font-medium text-foreground">{s.city}</span>
-                        <span className="font-mono font-bold text-foreground">{s.time}</span>
-                        <span className="text-muted-foreground text-xs">{s.date}</span>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={handleCopyTimes}
                       className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
@@ -367,6 +357,16 @@ const Index = () => {
                       <X className="h-3 w-3" />
                     </button>
                   </div>
+                </div>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-6 gap-y-1">
+                  {pinnedSummary.map((s) => (
+                    <div key={`${s.city}-${s.timezone}`} className="flex items-center gap-2 text-sm py-0.5">
+                      <span className="shrink-0">{s.flag}</span>
+                      <span className="font-medium text-foreground w-24 truncate">{s.city}</span>
+                      <span className="font-mono font-bold text-foreground w-20 text-right">{s.time}</span>
+                      <span className="text-muted-foreground text-xs">{s.date}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
