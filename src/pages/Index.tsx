@@ -66,8 +66,8 @@ const Index = () => {
     setLocations([...locations, city]);
   }
 
-  function removeLocation(index: number) {
-    setLocations(locations.filter((_, i) => i !== index));
+  function removeLocation(city: CityTimezone) {
+    setLocations(locations.filter((l) => !(l.city === city.city && l.timezone === city.timezone)));
   }
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
