@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
+import { RollingText } from "@/components/RollingText";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 import { toast } from "@/hooks/use-toast";
 
@@ -273,14 +274,10 @@ const Index = () => {
 
         {/* Animated date display */}
         <div className="mb-6 flex items-baseline gap-3">
-          <div className="relative overflow-hidden">
-            <div key={viewingDate.key} className="animate-fade-in flex items-baseline gap-2">
-              <span className="text-4xl font-bold tracking-tight text-foreground">{viewingDate.day}</span>
-              <span className="text-2xl font-semibold text-foreground/80">{viewingDate.month}</span>
-              <span className="text-lg text-muted-foreground">{viewingDate.year}</span>
-            </div>
-          </div>
-          <span className="text-sm text-muted-foreground">{viewingDate.weekday}</span>
+          <RollingText text={viewingDate.day} className="text-4xl font-bold tracking-tight text-foreground" />
+          <RollingText text={viewingDate.month} className="text-2xl font-semibold text-foreground/80" />
+          <RollingText text={viewingDate.year} className="text-lg text-muted-foreground" />
+          <span className="text-sm text-muted-foreground ml-1">{viewingDate.weekday}</span>
           {Math.abs(scrollOffsetHours) > 1 && (
             <button
               onClick={resetScroll}
