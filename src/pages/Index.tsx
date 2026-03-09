@@ -98,6 +98,8 @@ const Index = () => {
   const [copiedTime, setCopiedTime] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
@@ -190,6 +192,18 @@ const Index = () => {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return;
+
+    // Handle drag
+    if (isDragging && dragStartRef.current) {
+      const dx = e.clientX - dragStartRef.current.x;
+      const hoursShift = dx / HOUR_WIDTH;
+      setScrollOffsetHours(
+        Math.max(-168, Math.min(168, dragStartRef.current.scrollAtStart + hoursShift))
+      );
+      setHoverX(null);
+      return;
+    }
+
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x >= TIMELINE_START_X && x <= rect.width - 112) {
@@ -197,17 +211,43 @@ const Index = () => {
     } else {
       setHoverX(null);
     }
-  }, []);
+  }, [isDragging]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+      setIsDragging(true);
+      dragStartRef.current = { x: e.clientX, scrollAtStart: scrollOffsetHours };
+      setHoverX(null);
+      e.preventDefault();
+    }
+  }, [scrollOffsetHours]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      dragStartRef.current = null;
+    }
+  }, [isDragging]);
+
+  // Global mouse up listener to catch releases outside the container
+  useEffect(() => {
+    if (isDragging) {
+      const handleGlobalUp = () => {
+        setIsDragging(false);
+        dragStartRef.current = null;
+      };
+      window.addEventListener("mouseup", handleGlobalUp);
+      return () => window.removeEventListener("mouseup", handleGlobalUp);
+    }
+  }, [isDragging]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    // Scroll timeline horizontally: deltaY or deltaX both work
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    const hoursPerScroll = delta / 30; // ~1 hour per 30px of scroll
-    setScrollOffsetHours((prev) => {
-      // Clamp to ±7 days (168 hours)
-      const next = prev - hoursPerScroll;
-      return Math.max(-168, Math.min(168, next));
-    });
+    const hoursPerScroll = delta / 30;
+    setScrollOffsetHours((prev) => Math.max(-168, Math.min(168, prev - hoursPerScroll)));
     e.preventDefault();
   }, []);
 
@@ -220,17 +260,16 @@ const Index = () => {
   }, []);
 
   const handleClick = useCallback(() => {
+    if (isDragging) return; // Don't pin if we were dragging
     if (hoverOffsetHours == null) return;
-    // If clicking an already-pinned offset, remove it
     const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
     if (existingIdx !== -1) {
       setPinnedOffsets(pinnedOffsets.filter((_, i) => i !== existingIdx));
     } else {
-      // Add new pin (max 5 options)
       if (pinnedOffsets.length >= 5) return;
       setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
     }
-  }, [hoverOffsetHours, pinnedOffsets]);
+  }, [hoverOffsetHours, pinnedOffsets, isDragging]);
 
   const removeOption = useCallback((index: number) => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
@@ -305,8 +344,10 @@ const Index = () => {
 
             <div
               ref={containerRef}
-              className="relative cursor-crosshair"
+              className={`relative select-none ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
               onMouseMove={handleMouseMove}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
               onWheel={handleWheel}
