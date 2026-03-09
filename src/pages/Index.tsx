@@ -374,14 +374,19 @@ const Index = () => {
 
                 <div className="flex flex-wrap gap-0 divide-x divide-border/50">
                   {pinnedOptions.map((opt, optIdx) => (
-                    <div key={optIdx} className="px-4 py-3 max-w-[460px]">
+                    <div key={optIdx} className="px-5 py-3 min-w-[280px]">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-primary">
-                          Option {optIdx + 1}
-                        </span>
+                        <div>
+                          <span className="text-xs font-semibold text-primary">
+                            Option {optIdx + 1}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground ml-2">
+                            {opt.cities[0]?.date}
+                          </span>
+                        </div>
                         <button
                           onClick={() => removeOption(optIdx)}
-                          className="inline-flex items-center p-1 rounded-md text-muted-foreground hover:text-white hover:bg-destructive transition-colors"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-white hover:bg-destructive transition-colors"
                           title="Remove option"
                         >
                           <X className="h-4 w-4" />
@@ -391,10 +396,10 @@ const Index = () => {
                         {opt.cities.map((s) => (
                           <div
                             key={`${s.city}-${s.timezone}`}
-                            className="flex items-center gap-2 text-sm py-0.5"
+                            className="flex items-center gap-3 text-sm py-0.5"
                           >
                             <span className="shrink-0">{s.flag}</span>
-                            <span className="font-medium text-foreground flex-1 truncate">{s.city}</span>
+                            <span className="font-medium text-foreground w-32 truncate">{s.city}</span>
                             <span className="font-mono font-bold text-foreground tabular-nums">{s.time}</span>
                           </div>
                         ))}

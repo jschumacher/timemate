@@ -102,7 +102,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
           </div>
           <button
             onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-md text-muted-foreground hover:text-white hover:bg-destructive shrink-0 ml-auto"
+            className="opacity-0 group-hover:opacity-100 transition-all inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-white hover:bg-destructive shrink-0 ml-auto"
           >
             <X className="h-4 w-4" />
           </button>
