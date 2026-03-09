@@ -142,7 +142,7 @@ const Index = () => {
 
             {/* Timezone rows */}
             <div className="space-y-4">
-              {locations.map((loc, i) => (
+              {sortByTimezone(locations).map((loc, i) => (
                 <TimezoneRow
                   key={`${loc.city}-${loc.timezone}`}
                   city={loc}
