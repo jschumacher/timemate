@@ -4,6 +4,10 @@ import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 
+function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
+  return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
+}
+
 const STORAGE_KEY = "timezone-app-locations";
 
 function loadLocations(): CityTimezone[] {
