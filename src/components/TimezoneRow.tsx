@@ -119,7 +119,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, isFirst }: 
                   </span>
                 )}
                 {seg.label && (
-                  <span className="absolute -top-0.5 left-0.5 text-[8px] text-muted-foreground/80 font-medium whitespace-nowrap leading-none">
+                  <span className="absolute top-1 left-0.5 text-[8px] text-muted-foreground/80 font-medium whitespace-nowrap leading-none">
                     {seg.label}
                   </span>
                 )}
