@@ -231,8 +231,8 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-4 pt-10 pb-6">
         <div className="flex items-center gap-3 mb-1">
-          <Globe className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Timezone</h1>
+          <img src="/favicon.png" alt="Timemate logo" className="h-8 w-8" />
+          <h1 className="text-2xl font-bold tracking-tight">Timemate</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-6">
           Compare times across locations
