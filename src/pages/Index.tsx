@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
-import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
+import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
+
+const NOW_LINE_X = TIMELINE_START_X + (NOW_PIXEL_OFFSET - TIMELINE_START_X);
 
 function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
   return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
@@ -44,18 +46,14 @@ const Index = () => {
   const localTime = formatTime(localTz);
 
   // Snap hover
-  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
+  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_LINE_X) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
     return snapToQuarter(rawHoverOffsetHours, now);
   }, [rawHoverOffsetHours, now]);
-  const snappedHoverX = hoverOffsetHours != null
-    ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH
-    : null;
+  const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
 
-  const pinnedX = pinnedOffsetHours != null
-    ? NOW_PIXEL_OFFSET + pinnedOffsetHours * HOUR_WIDTH
-    : null;
+  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
 
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
@@ -147,7 +145,7 @@ const Index = () => {
               {/* Now label */}
               <div
                 className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                style={{ left: `${NOW_PIXEL_OFFSET}px`, transform: "translateX(-50%)" }}
+                style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
               >
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
                   <Clock className="h-3 w-3 text-now" />
@@ -200,7 +198,7 @@ const Index = () => {
             {/* Unified "now" line */}
             <div
               className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
-              style={{ left: `${NOW_PIXEL_OFFSET}px` }}
+              style={{ left: `${NOW_LINE_X}px` }}
             />
 
             {/* Pinned line (always visible) */}
