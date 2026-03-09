@@ -4,8 +4,18 @@ import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime } from "@/lib/timezone-data";
 
+const STORAGE_KEY = "timezone-app-locations";
+
+function loadLocations(): CityTimezone[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return [];
+}
+
 const Index = () => {
-  const [locations, setLocations] = useState<CityTimezone[]>([]);
+  const [locations, setLocations] = useState<CityTimezone[]>(loadLocations);
   const [now, setNow] = useState(new Date());
   const [hoverX, setHoverX] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -15,11 +25,24 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Persist locations
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
+  }, [locations]);
+
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  // Local time at hover position
-  const hoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
+  // Snap hover to 15-minute increments
+  const SNAP_FRACTION = 0.25; // 15 min = 0.25 hours
+  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
+  const hoverOffsetHours = rawHoverOffsetHours != null
+    ? Math.round(rawHoverOffsetHours / SNAP_FRACTION) * SNAP_FRACTION
+    : null;
+  const snappedHoverX = hoverOffsetHours != null
+    ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH
+    : null;
+
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
     const hoverDate = new Date(now.getTime() + hoverOffsetHours * 60 * 60 * 1000);
