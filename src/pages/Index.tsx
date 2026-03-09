@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Clock, Globe } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Clock, Globe, Copy, Link, Check } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
-import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
+import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
+import { toast } from "@/hooks/use-toast";
 
 const NOW_LINE_X = TIMELINE_START_X + (NOW_PIXEL_OFFSET - TIMELINE_START_X);
 
@@ -26,11 +28,79 @@ function snapToQuarter(rawOffsetHours: number, now: Date): number {
   return (snappedMs - now.getTime()) / (60 * 60 * 1000);
 }
 
+/** Parse cities from URL: ?tz=Sydney|Australia/Sydney,Tokyo|Asia/Tokyo */
+function parseCitiesFromUrl(param: string | null): CityTimezone[] | null {
+  if (!param) return null;
+  try {
+    const entries = param.split(",").map((e) => {
+      const [city, tz] = e.split("|");
+      return { city: decodeURIComponent(city), timezone: decodeURIComponent(tz) };
+    });
+    return entries
+      .map(({ city, timezone }) => {
+        // Try to find exact match in our database
+        const match = CITY_TIMEZONES.find(
+          (c) => c.city === city && c.timezone === timezone
+        );
+        if (match) return match;
+        // Fallback: construct a basic entry
+        return { city, country: "", timezone, flag: "🌍" } as CityTimezone;
+      })
+      .filter((c) => c.timezone);
+  } catch {
+    return null;
+  }
+}
+
+function buildShareUrl(locations: CityTimezone[], pinnedOffsetHours: number): string {
+  const base = window.location.origin + window.location.pathname;
+  const tz = locations
+    .map((l) => `${encodeURIComponent(l.city)}|${encodeURIComponent(l.timezone)}`)
+    .join(",");
+  const pin = pinnedOffsetHours.toFixed(4);
+  return `${base}?tz=${tz}&pin=${pin}`;
+}
+
+function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {
+  const d = new Date(now.getTime() + offsetHours * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
+
+function formatDateAtOffset(timezone: string, now: Date, offsetHours: number): string {
+  const d = new Date(now.getTime() + offsetHours * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(d);
+}
+
 const Index = () => {
-  const [locations, setLocations] = useState<CityTimezone[]>(loadLocations);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlCities = useMemo(() => parseCitiesFromUrl(searchParams.get("tz")), []);
+  const urlPin = useMemo(() => {
+    const p = searchParams.get("pin");
+    return p != null ? parseFloat(p) : null;
+  }, []);
+
+  // If loaded from a share URL, use URL cities but don't persist
+  const isSharedView = urlCities != null && urlCities.length > 0;
+
+  const [locations, setLocations] = useState<CityTimezone[]>(() => {
+    if (isSharedView) return urlCities!;
+    return loadLocations();
+  });
   const [now, setNow] = useState(new Date());
   const [hoverX, setHoverX] = useState<number | null>(null);
-  const [pinnedOffsetHours, setPinnedOffsetHours] = useState<number | null>(null);
+  const [pinnedOffsetHours, setPinnedOffsetHours] = useState<number | null>(urlPin);
+  const [copiedTime, setCopiedTime] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,9 +108,12 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Only persist to localStorage if NOT a shared view
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
-  }, [locations]);
+    if (!isSharedView) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
+    }
+  }, [locations, isSharedView]);
 
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
@@ -77,6 +150,20 @@ const Index = () => {
     }).format(d);
   }, [pinnedOffsetHours, now, localTz]);
 
+  const sortedLocations = useMemo(() => sortByTimezone(locations), [locations]);
+
+  // Pinned summary data
+  const pinnedSummary = useMemo(() => {
+    if (pinnedOffsetHours == null || locations.length === 0) return null;
+    return sortedLocations.map((loc) => ({
+      city: loc.city,
+      flag: loc.flag,
+      time: formatTimeAtOffset(loc.timezone, now, pinnedOffsetHours),
+      date: formatDateAtOffset(loc.timezone, now, pinnedOffsetHours),
+      timezone: loc.timezone,
+    }));
+  }, [pinnedOffsetHours, now, sortedLocations, locations]);
+
   function addLocation(city: CityTimezone) {
     if (locations.length >= 5) return;
     if (locations.some((l) => l.city === city.city && l.timezone === city.timezone)) return;
@@ -99,13 +186,28 @@ const Index = () => {
 
   const handleClick = useCallback(() => {
     if (hoverOffsetHours == null) return;
-    // Toggle pin: if clicking same spot, unpin
     if (pinnedOffsetHours != null && Math.abs(pinnedOffsetHours - hoverOffsetHours) < 0.01) {
       setPinnedOffsetHours(null);
     } else {
       setPinnedOffsetHours(hoverOffsetHours);
     }
   }, [hoverOffsetHours, pinnedOffsetHours]);
+
+  const handleCopyTimes = useCallback(() => {
+    if (!pinnedSummary) return;
+    const lines = pinnedSummary.map((s) => `${s.flag} ${s.city}: ${s.time}, ${s.date}`);
+    navigator.clipboard.writeText(lines.join("\n"));
+    setCopiedTime(true);
+    setTimeout(() => setCopiedTime(false), 2000);
+  }, [pinnedSummary]);
+
+  const handleCopyLink = useCallback(() => {
+    if (pinnedOffsetHours == null) return;
+    const url = buildShareUrl(locations, pinnedOffsetHours);
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  }, [locations, pinnedOffsetHours]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -133,90 +235,136 @@ const Index = () => {
             </p>
           </div>
         ) : (
-          <div
-            ref={containerRef}
-            className="relative cursor-crosshair"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onClick={handleClick}
-          >
-            {/* Line labels row */}
-            <div className="relative h-10 mb-2">
-              {/* Now label */}
-              <div
-                className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
-              >
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
-                  <Clock className="h-3 w-3 text-now" />
-                  <span className="text-xs font-mono font-semibold text-now">{localTime}</span>
+          <>
+            <div
+              ref={containerRef}
+              className="relative cursor-crosshair"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              onClick={handleClick}
+            >
+              {/* Line labels row */}
+              <div className="relative h-10 mb-2">
+                {/* Now label */}
+                <div
+                  className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                  style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
+                >
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
+                    <Clock className="h-3 w-3 text-now" />
+                    <span className="text-xs font-mono font-semibold text-now">{localTime}</span>
+                  </div>
+                  <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
                 </div>
-                <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
+
+                {/* Pinned label (always visible when set) */}
+                {pinnedX != null && pinnedLocalTime && hoverX == null && (
+                  <div
+                    className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                    style={{ left: `${pinnedX}px`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
+                      <span className="text-xs font-mono font-bold text-hover-line">{pinnedLocalTime}</span>
+                      <span className="text-[9px] text-hover-line/70">pinned</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hover label */}
+                {snappedHoverX != null && hoverLocalTime && (
+                  <div
+                    className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
+                    style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
+                      <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
+                      <span className="text-[9px] text-hover-line/70">click to pin</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Pinned label (always visible when set) */}
-              {pinnedX != null && pinnedLocalTime && hoverX == null && (
-                <div
-                  className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                  style={{ left: `${pinnedX}px`, transform: "translateX(-50%)" }}
-                >
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                    <span className="text-xs font-mono font-bold text-hover-line">{pinnedLocalTime}</span>
-                    <span className="text-[9px] text-hover-line/70">pinned</span>
-                  </div>
-                </div>
-              )}
+              {/* Timezone rows */}
+              <div className="space-y-4">
+                {sortedLocations.map((loc) => (
+                  <TimezoneRow
+                    key={`${loc.city}-${loc.timezone}`}
+                    city={loc}
+                    now={now}
+                    onRemove={() => removeLocation(loc)}
+                    hoverOffsetHours={hoverOffsetHours}
+                    pinnedOffsetHours={pinnedOffsetHours}
+                  />
+                ))}
+              </div>
 
-              {/* Hover label */}
-              {snappedHoverX != null && hoverLocalTime && (
-                <div
-                  className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                  style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
-                >
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                    <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
-                    <span className="text-[9px] text-hover-line/70">click to pin</span>
-                  </div>
-                </div>
-              )}
-            </div>
+              {/* Unified "now" line */}
+              <div
+                className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
+                style={{ left: `${NOW_LINE_X}px` }}
+              />
 
-            {/* Timezone rows */}
-            <div className="space-y-4">
-              {sortByTimezone(locations).map((loc, i) => (
-                <TimezoneRow
-                  key={`${loc.city}-${loc.timezone}`}
-                  city={loc}
-                  now={now}
-                  onRemove={() => removeLocation(loc)}
-                  hoverOffsetHours={hoverOffsetHours}
-                  pinnedOffsetHours={pinnedOffsetHours}
+              {/* Pinned line (always visible) */}
+              {pinnedX != null && (
+                <div
+                  className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
+                  style={{ left: `${pinnedX}px` }}
                 />
-              ))}
+              )}
+
+              {/* Hover cursor line */}
+              {snappedHoverX != null && (
+                <div
+                  className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
+                  style={{ left: `${snappedHoverX}px` }}
+                />
+              )}
             </div>
 
-            {/* Unified "now" line */}
-            <div
-              className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
-              style={{ left: `${NOW_LINE_X}px` }}
-            />
-
-            {/* Pinned line (always visible) */}
-            {pinnedX != null && (
-              <div
-                className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
-                style={{ left: `${pinnedX}px` }}
-              />
+            {/* Pinned summary */}
+            {pinnedSummary && (
+              <div className="mt-6 rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Pinned times
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyTimes}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                    >
+                      {copiedTime ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedTime ? "Copied!" : "Copy times"}
+                    </button>
+                    <button
+                      onClick={handleCopyLink}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                    >
+                      {copiedLink ? <Check className="h-3 w-3" /> : <Link className="h-3 w-3" />}
+                      {copiedLink ? "Copied!" : "Copy link"}
+                    </button>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  {pinnedSummary.map((s) => (
+                    <div
+                      key={`${s.city}-${s.timezone}`}
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{s.flag}</span>
+                        <span className="text-sm text-foreground font-medium">{s.city}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground">{s.date}</span>
+                        <span className="text-sm font-mono font-bold text-foreground">{s.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-
-            {/* Hover cursor line */}
-            {snappedHoverX != null && (
-              <div
-                className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
-                style={{ left: `${snappedHoverX}px` }}
-              />
-            )}
-          </div>
+          </>
         )}
       </div>
     </div>
