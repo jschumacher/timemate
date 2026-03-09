@@ -97,7 +97,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, isFirst }: 
         </div>
 
         {/* Timeline */}
-        <div className="relative overflow-hidden rounded-full h-8 bg-timeline-bar flex-1">
+        <div className="relative overflow-hidden rounded-md h-10 bg-timeline-bar flex-1">
           <div
             className="absolute top-0 h-full flex"
             style={{
@@ -108,14 +108,18 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, isFirst }: 
             {segments.map((seg, i) => (
               <div
                 key={i}
-                className={`relative h-full flex-shrink-0 ${
+                className={`relative h-full flex-shrink-0 border-r border-border/30 ${
                   seg.isNight ? "bg-timeline-night" : "bg-timeline-day"
                 }`}
                 style={{ width: `${HOUR_WIDTH}px` }}
               >
-                {/* Date label centered in the bar */}
+                {seg.hour % 3 === 0 && (
+                  <span className="absolute bottom-0.5 left-0.5 text-[9px] text-muted-foreground/60 font-mono leading-none">
+                    {seg.hour.toString().padStart(2, "0")}
+                  </span>
+                )}
                 {seg.label && (
-                  <span className="absolute top-1/2 -translate-y-1/2 left-1 text-[10px] text-muted-foreground/70 font-medium whitespace-nowrap leading-none">
+                  <span className="absolute -top-0.5 left-0.5 text-[8px] text-muted-foreground/80 font-medium whitespace-nowrap leading-none">
                     {seg.label}
                   </span>
                 )}
