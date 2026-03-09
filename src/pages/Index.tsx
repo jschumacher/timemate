@@ -46,14 +46,12 @@ const Index = () => {
   const localTime = formatTime(localTz);
 
   // Snap hover
-  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
+  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_LINE_X) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
     return snapToQuarter(rawHoverOffsetHours, now);
   }, [rawHoverOffsetHours, now]);
-  const snappedHoverX = hoverOffsetHours != null
-    ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH
-    : null;
+  const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
 
   const pinnedX = pinnedOffsetHours != null
     ? NOW_PIXEL_OFFSET + pinnedOffsetHours * HOUR_WIDTH
