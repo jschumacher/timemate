@@ -177,7 +177,13 @@ const Index = () => {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    setHoverX(e.clientX - rect.left);
+    const x = e.clientX - rect.left;
+    // Only show hover when over the timeline area (not city name or time columns)
+    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+      setHoverX(x);
+    } else {
+      setHoverX(null);
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
