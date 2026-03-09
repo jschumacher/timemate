@@ -8,10 +8,11 @@ interface TimezoneRowProps {
   onRemove: () => void;
   hoverOffsetHours?: number | null;
   pinnedOffsetHours?: number | null;
+  scrollOffsetHours?: number;
 }
 
-export const TOTAL_HOURS = 96;
-export const HOURS_BEFORE_NOW = 24;
+export const TOTAL_HOURS = 720; // 30 days
+export const HOURS_BEFORE_NOW = 168; // 7 days before
 export const HOUR_WIDTH = 28;
 
 // Layout constants used by the shared marker lines in Index
