@@ -84,7 +84,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     <div className="group relative">
       <div className="flex items-center gap-3">
         {/* Left info */}
-        <div className="flex items-center gap-2 min-w-[140px] shrink-0">
+        <div className="flex items-center gap-2 w-[180px] shrink-0">
           <span className="text-base">{city.flag}</span>
           <div>
             <div className="text-xs text-muted-foreground leading-tight">
