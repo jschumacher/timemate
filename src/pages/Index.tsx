@@ -344,8 +344,10 @@ const Index = () => {
 
             <div
               ref={containerRef}
-              className="relative cursor-crosshair"
+              className={`relative select-none ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
               onMouseMove={handleMouseMove}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
               onWheel={handleWheel}
