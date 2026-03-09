@@ -33,12 +33,14 @@ const Index = () => {
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  // Snap hover to 15-minute increments
-  const SNAP_FRACTION = 0.25; // 15 min = 0.25 hours
+  // Snap hover to absolute 15-minute clock increments (0, 15, 30, 45)
   const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_PIXEL_OFFSET) / HOUR_WIDTH : null;
-  const hoverOffsetHours = rawHoverOffsetHours != null
-    ? Math.round(rawHoverOffsetHours / SNAP_FRACTION) * SNAP_FRACTION
-    : null;
+  const hoverOffsetHours = useMemo(() => {
+    if (rawHoverOffsetHours == null) return null;
+    const hoverMs = now.getTime() + rawHoverOffsetHours * 60 * 60 * 1000;
+    const snappedMs = Math.round(hoverMs / (15 * 60 * 1000)) * (15 * 60 * 1000);
+    return (snappedMs - now.getTime()) / (60 * 60 * 1000);
+  }, [rawHoverOffsetHours, now]);
   const snappedHoverX = hoverOffsetHours != null
     ? NOW_PIXEL_OFFSET + hoverOffsetHours * HOUR_WIDTH
     : null;
