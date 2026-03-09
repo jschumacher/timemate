@@ -127,16 +127,15 @@ const Index = () => {
 
   const pinnedXPositions = pinnedOffsets.map((o) => scrolledNowLineX + o * HOUR_WIDTH);
 
-  // Date label for current scroll position
-  const scrollDateLabel = useMemo(() => {
+  // Split date into parts for animated display
+  const viewingDate = useMemo(() => {
     const localTzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const d = new Date(now.getTime() - scrollOffsetHours * 60 * 60 * 1000);
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone: localTzName,
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    }).format(d);
+    const weekday = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, weekday: "long" }).format(d);
+    const month = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, month: "long" }).format(d);
+    const day = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, day: "numeric" }).format(d);
+    const year = new Intl.DateTimeFormat("en-US", { timeZone: localTzName, year: "numeric" }).format(d);
+    return { weekday, month, day, year, key: `${weekday}-${month}-${day}` };
   }, [now, scrollOffsetHours]);
 
   const hoverLocalTime = useMemo(() => {
