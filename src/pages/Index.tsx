@@ -329,42 +329,47 @@ const Index = () => {
 
             {/* Pinned summary – compact inline */}
             {pinnedSummary && (
-              <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Pinned
+              <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Pinned times
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={handleCopyTimes}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedTime ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                       {copiedTime ? "Copied" : "Times"}
                     </button>
                     <button
                       onClick={handleCopyLink}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedLink ? <Check className="h-3 w-3" /> : <Link className="h-3 w-3" />}
                       {copiedLink ? "Copied" : "Link"}
                     </button>
                     <button
                       onClick={() => setPinnedOffsetHours(null)}
-                      className="inline-flex items-center p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                      className="inline-flex items-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
                       title="Unpin"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  {pinnedSummary.map((s) => (
-                    <div key={`${s.city}-${s.timezone}`} className="flex items-center gap-2 text-sm py-0.5">
-                      <span className="shrink-0">{s.flag}</span>
-                      <span className="font-medium text-foreground w-24 truncate">{s.city}</span>
-                      <span className="font-mono font-bold text-foreground w-20 text-right">{s.time}</span>
-                      <span className="text-muted-foreground text-xs">{s.date}</span>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                  {pinnedSummary.map((s, i) => (
+                    <div
+                      key={`${s.city}-${s.timezone}`}
+                      className={`flex items-center gap-3 px-4 py-2.5 ${
+                        i < pinnedSummary.length - 1 ? "border-b border-border/50" : ""
+                      }`}
+                    >
+                      <span className="text-lg shrink-0">{s.flag}</span>
+                      <span className="font-medium text-foreground text-sm flex-1 truncate">{s.city}</span>
+                      <span className="font-mono font-bold text-foreground text-base tabular-nums">{s.time}</span>
+                      <span className="text-muted-foreground text-xs w-20 text-right">{s.date}</span>
                     </div>
                   ))}
                 </div>
