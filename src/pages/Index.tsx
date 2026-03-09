@@ -96,6 +96,7 @@ const Index = () => {
   const [pinnedOffsets, setPinnedOffsets] = useState<number[]>(urlPins);
   const [copiedTime, setCopiedTime] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
