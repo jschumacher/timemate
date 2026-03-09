@@ -307,8 +307,8 @@ const Index = () => {
       <div className="max-w-5xl mx-auto px-4 pt-10 pb-6">
         {/* Header row: logo + search */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="Timemate logo" className="h-12 w-12" />
+          <div className="flex items-center gap-2">
+            <img src="/favicon.png" alt="Timemate logo" className="h-14 w-14" />
             <h1 className="text-2xl font-bold tracking-tight">Timemate</h1>
           </div>
           <div className="w-72">
