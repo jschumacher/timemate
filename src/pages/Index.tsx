@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, Globe, Copy, Link, Check } from "lucide-react";
+import { Clock, Globe, Copy, Link, Check, X } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
