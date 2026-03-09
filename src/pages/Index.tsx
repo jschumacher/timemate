@@ -239,7 +239,7 @@ const Index = () => {
 
   // Global mouse up listener to catch releases outside the container
   useEffect(() => {
-    if (isDragging) {
+    if (dragStartRef.current !== null || isDragging) {
       const handleGlobalUp = () => {
         setIsDragging(false);
         dragStartRef.current = null;
