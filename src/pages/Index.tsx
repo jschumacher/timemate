@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, Globe, Copy, Link, Check, X, Plus } from "lucide-react";
+import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
@@ -96,6 +96,7 @@ const Index = () => {
   const [pinnedOffsets, setPinnedOffsets] = useState<number[]>(urlPins);
   const [copiedTime, setCopiedTime] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [scrollOffsetHours, setScrollOffsetHours] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
@@ -115,14 +116,28 @@ const Index = () => {
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const localTime = formatTime(localTz);
 
-  const rawHoverOffsetHours = hoverX != null ? (hoverX - NOW_LINE_X) / HOUR_WIDTH : null;
+  // Hover offset accounts for scroll: the pixel position maps to a different time when scrolled
+  const scrolledNowLineX = NOW_LINE_X + scrollOffsetHours * HOUR_WIDTH;
+  const rawHoverOffsetHours = hoverX != null ? (hoverX - scrolledNowLineX) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
     return snapToQuarter(rawHoverOffsetHours, now);
   }, [rawHoverOffsetHours, now]);
-  const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
+  const snappedHoverX = hoverOffsetHours != null ? scrolledNowLineX + hoverOffsetHours * HOUR_WIDTH : null;
 
-  const pinnedXPositions = pinnedOffsets.map((o) => NOW_LINE_X + o * HOUR_WIDTH);
+  const pinnedXPositions = pinnedOffsets.map((o) => scrolledNowLineX + o * HOUR_WIDTH);
+
+  // Date label for current scroll position
+  const scrollDateLabel = useMemo(() => {
+    const localTzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const d = new Date(now.getTime() - scrollOffsetHours * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: localTzName,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(d);
+  }, [now, scrollOffsetHours]);
 
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
@@ -184,6 +199,22 @@ const Index = () => {
     }
   }, []);
 
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Scroll timeline horizontally: deltaY or deltaX both work
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const hoursPerScroll = delta / 30; // ~1 hour per 30px of scroll
+    setScrollOffsetHours((prev) => {
+      // Clamp to ±7 days (168 hours)
+      const next = prev - hoursPerScroll;
+      return Math.max(-168, Math.min(168, next));
+    });
+    e.preventDefault();
+  }, []);
+
+  const resetScroll = useCallback(() => {
+    setScrollOffsetHours(0);
+  }, []);
+
   const handleMouseLeave = useCallback(() => {
     setHoverX(null);
   }, []);
@@ -225,7 +256,7 @@ const Index = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   }, [locations, pinnedOffsets]);
 
-  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
+  const pinnedX = pinnedOffsetHours != null ? scrolledNowLineX + pinnedOffsetHours * HOUR_WIDTH : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -254,25 +285,44 @@ const Index = () => {
           </div>
         ) : (
           <>
+            {/* Scroll date indicator + reset button */}
+            {Math.abs(scrollOffsetHours) > 1 && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Viewing: {scrollDateLabel}
+                </span>
+                <button
+                  onClick={resetScroll}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Back to now
+                </button>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground/50 mb-2">Scroll to navigate dates</p>
+
             <div
               ref={containerRef}
               className="relative cursor-crosshair"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
+              onWheel={handleWheel}
             >
               {/* Line labels row */}
               <div className="relative h-10 mb-2">
-                {/* Now label */}
+                {/* Now label - moves with scroll */}
                 <div
                   className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                  style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
+                  style={{ left: `${scrolledNowLineX}px`, transform: "translateX(-50%)" }}
                 >
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
                     <Clock className="h-3 w-3 text-now" />
                     <span className="text-xs font-mono font-semibold text-now">{localTime}</span>
                   </div>
-                  <span className="text-[9px] text-now/70 mt-0.5">current local time</span>
+                  <span className="text-[9px] text-now/70 mt-0.5">now</span>
                 </div>
 
                 {/* Pinned label (show last pinned when not hovering) */}
@@ -312,14 +362,15 @@ const Index = () => {
                     onRemove={() => removeLocation(loc)}
                     hoverOffsetHours={hoverOffsetHours}
                     pinnedOffsetHours={pinnedOffsetHours}
+                    scrollOffsetHours={scrollOffsetHours}
                   />
                 ))}
               </div>
 
-              {/* Unified "now" line */}
+              {/* Unified "now" line - moves with scroll */}
               <div
                 className="absolute top-10 bottom-0 w-px bg-now/60 z-10 pointer-events-none"
-                style={{ left: `${NOW_LINE_X}px` }}
+                style={{ left: `${scrolledNowLineX}px` }}
               />
 
               {/* Pinned lines (all of them) */}

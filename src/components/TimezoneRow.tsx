@@ -8,10 +8,11 @@ interface TimezoneRowProps {
   onRemove: () => void;
   hoverOffsetHours?: number | null;
   pinnedOffsetHours?: number | null;
+  scrollOffsetHours?: number;
 }
 
-export const TOTAL_HOURS = 96;
-export const HOURS_BEFORE_NOW = 24;
+export const TOTAL_HOURS = 720; // 30 days
+export const HOURS_BEFORE_NOW = 168; // 7 days before
 export const HOUR_WIDTH = 28;
 
 // Layout constants used by the shared marker lines in Index
@@ -31,11 +32,10 @@ const PERIOD_CLASS: Record<HourPeriod, string> = {
   night: "bg-timeline-night",
 };
 
-export function getTimelineTranslateX(now: Date): number {
+export function getTimelineTranslateX(now: Date, scrollOffsetHours: number = 0): number {
   const minutesFraction = now.getMinutes() / 60;
   const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
-  // Translate so that the absolute "now" timestamp is rendered under the shared marker line.
-  return -nowPosition + NOW_IN_TIMELINE_X;
+  return -nowPosition + NOW_IN_TIMELINE_X + scrollOffsetHours * HOUR_WIDTH;
 }
 
 function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {
@@ -48,7 +48,7 @@ function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): s
   }).format(d);
 }
 
-export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours }: TimezoneRowProps) {
+export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours, scrollOffsetHours = 0 }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const offset = getUtcOffset(city.timezone);
 
@@ -74,7 +74,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     return segs;
   }, [city.timezone, now]);
 
-  const translateX = getTimelineTranslateX(now);
+  const translateX = getTimelineTranslateX(now, scrollOffsetHours);
 
   const hoverTimeLabel = useMemo(() => {
     if (hoverOffsetHours == null) return null;
