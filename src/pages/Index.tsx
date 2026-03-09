@@ -2,7 +2,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
-import { CityTimezone, formatTime } from "@/lib/timezone-data";
+import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
+
+function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
+  return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
+}
 
 const STORAGE_KEY = "timezone-app-locations";
 
@@ -62,8 +66,8 @@ const Index = () => {
     setLocations([...locations, city]);
   }
 
-  function removeLocation(index: number) {
-    setLocations(locations.filter((_, i) => i !== index));
+  function removeLocation(city: CityTimezone) {
+    setLocations(locations.filter((l) => !(l.city === city.city && l.timezone === city.timezone)));
   }
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -138,12 +142,12 @@ const Index = () => {
 
             {/* Timezone rows */}
             <div className="space-y-4">
-              {locations.map((loc, i) => (
+              {sortByTimezone(locations).map((loc, i) => (
                 <TimezoneRow
                   key={`${loc.city}-${loc.timezone}`}
                   city={loc}
                   now={now}
-                  onRemove={() => removeLocation(i)}
+                  onRemove={() => removeLocation(loc)}
                   hoverOffsetHours={hoverOffsetHours}
                   isFirst={i === 0}
                 />

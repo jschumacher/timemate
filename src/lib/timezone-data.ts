@@ -135,6 +135,13 @@ export const CITY_TIMEZONES: CityTimezone[] = [
   { city: "Addis Ababa", country: "Ethiopia", timezone: "Africa/Addis_Ababa", flag: "🇪🇹" },
 ];
 
+export function getUtcOffsetMinutes(timezone: string): number {
+  const now = new Date();
+  const utcStr = now.toLocaleString("en-US", { timeZone: "UTC" });
+  const tzStr = now.toLocaleString("en-US", { timeZone: timezone });
+  return (new Date(tzStr).getTime() - new Date(utcStr).getTime()) / 60000;
+}
+
 export function getUtcOffset(timezone: string): string {
   const now = new Date();
   const formatter = new Intl.DateTimeFormat("en-US", {
