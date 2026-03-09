@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
-import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH } from "@/components/TimezoneRow";
+import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
+
+const NOW_LINE_X = TIMELINE_START_X + (NOW_PIXEL_OFFSET - TIMELINE_START_X);
 
 function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
   return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
