@@ -90,6 +90,15 @@
   .bg-timeline-night {
     background-color: hsl(var(--timeline-night));
   }
+  .bg-timeline-shoulder {
+    background-color: hsl(var(--timeline-shoulder));
+  }
+  .bg-timeline-work {
+    background-color: hsl(var(--timeline-work));
+  }
+}
+    background-color: hsl(var(--timeline-night));
+  }
   .bg-timeline-day {
     background-color: hsl(var(--timeline-day));
   }
