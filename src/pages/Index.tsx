@@ -170,6 +170,10 @@ const Index = () => {
             )}
           </div>
         )}
+
+        {locations.length >= 2 && (
+          <MeetingSuggestions locations={sortByTimezone(locations)} />
+        )}
       </div>
     </div>
   );
