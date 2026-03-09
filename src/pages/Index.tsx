@@ -147,7 +147,7 @@ const Index = () => {
                   key={`${loc.city}-${loc.timezone}`}
                   city={loc}
                   now={now}
-                  onRemove={() => removeLocation(i)}
+                  onRemove={() => removeLocation(loc)}
                   hoverOffsetHours={hoverOffsetHours}
                   isFirst={i === 0}
                 />
