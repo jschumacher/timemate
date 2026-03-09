@@ -40,8 +40,6 @@ function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): s
 export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const offset = getUtcOffset(city.timezone);
-  const currentHour = getHourInTimezone(city.timezone, now);
-  const period = getHourPeriod(currentHour);
 
   const segments = useMemo(() => {
     const segs: { hour: number; date: Date; period: HourPeriod; label?: string }[] = [];
