@@ -14,6 +14,8 @@ export const TOTAL_HOURS = 96;
 export const HOURS_BEFORE_NOW = 24;
 export const HOUR_WIDTH = 28;
 export const NOW_PIXEL_OFFSET = 300;
+export const LEFT_INFO_WIDTH = 180;
+export const ROW_GAP = 12;
 
 const PERIOD_CLASS: Record<HourPeriod, string> = {
   work: "bg-timeline-work",
