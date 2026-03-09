@@ -145,7 +145,7 @@ const Index = () => {
               {/* Now label */}
               <div
                 className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                style={{ left: `${NOW_PIXEL_OFFSET}px`, transform: "translateX(-50%)" }}
+                style={{ left: `${NOW_LINE_X}px`, transform: "translateX(-50%)" }}
               >
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-now/20 border border-now/40">
                   <Clock className="h-3 w-3 text-now" />
