@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, Globe, Copy, Link, Check } from "lucide-react";
+import { Clock, Globe, Copy, Link, Check, X } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
@@ -321,46 +321,46 @@ const Index = () => {
               )}
             </div>
 
-            {/* Pinned summary */}
+            {/* Pinned summary – compact inline */}
             {pinnedSummary && (
-              <div className="mt-6 rounded-lg border border-border bg-card p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Pinned times
+              <div className="mt-4 rounded-lg border border-border bg-card px-3 py-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider shrink-0">
+                    Pinned
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 flex-wrap flex-1">
+                    {pinnedSummary.map((s) => (
+                      <span key={`${s.city}-${s.timezone}`} className="inline-flex items-center gap-1.5 text-sm">
+                        <span>{s.flag}</span>
+                        <span className="font-medium text-foreground">{s.city}</span>
+                        <span className="font-mono font-bold text-foreground">{s.time}</span>
+                        <span className="text-muted-foreground text-xs">{s.date}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={handleCopyTimes}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedTime ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedTime ? "Copied!" : "Copy times"}
+                      {copiedTime ? "Copied" : "Times"}
                     </button>
                     <button
                       onClick={handleCopyLink}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
                     >
                       {copiedLink ? <Check className="h-3 w-3" /> : <Link className="h-3 w-3" />}
-                      {copiedLink ? "Copied!" : "Copy link"}
+                      {copiedLink ? "Copied" : "Link"}
+                    </button>
+                    <button
+                      onClick={() => setPinnedOffsetHours(null)}
+                      className="inline-flex items-center p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+                      title="Unpin"
+                    >
+                      <X className="h-3 w-3" />
                     </button>
                   </div>
-                </div>
-                <div className="grid gap-2">
-                  {pinnedSummary.map((s) => (
-                    <div
-                      key={`${s.city}-${s.timezone}`}
-                      className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{s.flag}</span>
-                        <span className="text-sm text-foreground font-medium">{s.city}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">{s.date}</span>
-                        <span className="text-sm font-mono font-bold text-foreground">{s.time}</span>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
