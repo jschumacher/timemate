@@ -40,12 +40,12 @@ function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): s
 export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const offset = getUtcOffset(city.timezone);
-  const currentHour = getHourInTimezone(city.timezone, now);
-  const period = getHourPeriod(currentHour);
 
   const segments = useMemo(() => {
     const segs: { hour: number; date: Date; period: HourPeriod; label?: string }[] = [];
-    const startTime = new Date(now.getTime() - HOURS_BEFORE_NOW * 60 * 60 * 1000);
+    const hourAlignedNow = new Date(now);
+    hourAlignedNow.setMinutes(0, 0, 0);
+    const startTime = new Date(hourAlignedNow.getTime() - HOURS_BEFORE_NOW * 60 * 60 * 1000);
 
     for (let i = 0; i < TOTAL_HOURS; i++) {
       const d = new Date(startTime.getTime() + i * 60 * 60 * 1000);

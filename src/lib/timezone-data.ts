@@ -178,12 +178,13 @@ export function formatDate(timezone: string): string {
 }
 
 export function getHourInTimezone(timezone: string, date: Date): number {
-  const str = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
-    hour: "numeric",
-    hour12: false,
-  }).format(date);
-  return parseInt(str, 10);
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const hourPart = parts.find((p) => p.type === "hour");
+  return hourPart ? parseInt(hourPart.value, 10) : 0;
 }
 
 export type HourPeriod = "work" | "shoulder" | "night";
