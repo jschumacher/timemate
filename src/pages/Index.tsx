@@ -53,9 +53,7 @@ const Index = () => {
   }, [rawHoverOffsetHours, now]);
   const snappedHoverX = hoverOffsetHours != null ? NOW_LINE_X + hoverOffsetHours * HOUR_WIDTH : null;
 
-  const pinnedX = pinnedOffsetHours != null
-    ? NOW_PIXEL_OFFSET + pinnedOffsetHours * HOUR_WIDTH
-    : null;
+  const pinnedX = pinnedOffsetHours != null ? NOW_LINE_X + pinnedOffsetHours * HOUR_WIDTH : null;
 
   const hoverLocalTime = useMemo(() => {
     if (hoverOffsetHours == null) return null;
