@@ -155,9 +155,10 @@ const Index = () => {
             />
 
             {/* Hover cursor line spanning all rows */}
-            {hoverX != null && (
+            {snappedHoverX != null && (
               <div
                 className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
+                style={{ left: `${snappedHoverX}px` }}
                 style={{ left: `${hoverX}px` }}
               />
             )}
