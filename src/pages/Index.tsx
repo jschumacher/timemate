@@ -199,6 +199,22 @@ const Index = () => {
     }
   }, []);
 
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Scroll timeline horizontally: deltaY or deltaX both work
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const hoursPerScroll = delta / 30; // ~1 hour per 30px of scroll
+    setScrollOffsetHours((prev) => {
+      // Clamp to ±7 days (168 hours)
+      const next = prev - hoursPerScroll;
+      return Math.max(-168, Math.min(168, next));
+    });
+    e.preventDefault();
+  }, []);
+
+  const resetScroll = useCallback(() => {
+    setScrollOffsetHours(0);
+  }, []);
+
   const handleMouseLeave = useCallback(() => {
     setHoverX(null);
   }, []);
