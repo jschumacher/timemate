@@ -308,8 +308,8 @@ const Index = () => {
         {/* Header row: logo + search */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-1">
-            <img src="/favicon.png" alt="Timemate logo" className="h-14 w-14 -ml-3" />
-            <h1 className="text-2xl font-bold tracking-tight">Timemate</h1>
+            <img src="/favicon.png" alt="Welltimed logo" className="h-14 w-14 -ml-3" />
+            <h1 className="text-2xl font-bold tracking-tight">Welltimed</h1>
           </div>
           <div className="w-72">
             <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
