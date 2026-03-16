@@ -87,6 +87,9 @@ function formatDateAtOffset(timezone: string, now: Date, offsetHours: number): s
 }
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  const timelineStartX = isMobile ? TIMELINE_START_X_MOBILE : TIMELINE_START_X;
+  const nowLineX = getNowLineX(isMobile);
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCities = useMemo(() => parseCitiesFromUrl(searchParams.get("tz")), []);
   const urlPins = useMemo(() => {
