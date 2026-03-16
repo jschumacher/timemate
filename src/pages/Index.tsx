@@ -133,7 +133,7 @@ const Index = () => {
   const localTime = formatTime(localTz);
 
   // Hover offset accounts for scroll: the pixel position maps to a different time when scrolled
-  const scrolledNowLineX = NOW_LINE_X + scrollOffsetHours * HOUR_WIDTH;
+  const scrolledNowLineX = nowLineX + scrollOffsetHours * HOUR_WIDTH;
   const rawHoverOffsetHours = hoverX != null ? (hoverX - scrolledNowLineX) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
