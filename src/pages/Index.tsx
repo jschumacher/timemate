@@ -242,7 +242,7 @@ const Index = () => {
       setDidDrag(false);
       e.preventDefault();
     }
-  }, [scrollOffsetHours]);
+  }, [scrollOffsetHours, timelineStartX, isMobile]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
