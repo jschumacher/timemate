@@ -115,6 +115,9 @@ const Index = () => {
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const touchStartRef = useRef<{ x: number; scrollAtStart: number; time: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedPinIndex, setSelectedPinIndex] = useState<number | null>(null);
+  const [draggingPinIndex, setDraggingPinIndex] = useState<number | null>(null);
+  const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
   const pinnedOffsetHours = pinnedOffsets.length > 0 ? pinnedOffsets[pinnedOffsets.length - 1] : null;
@@ -176,6 +179,18 @@ const Index = () => {
       hour12: true,
     }).format(d);
   }, [pinnedOffsetHours, now, localTz]);
+
+  const pinnedLocalTimes = useMemo(() => {
+    return pinnedOffsets.map(offset => {
+      const d = new Date(now.getTime() + offset * 60 * 60 * 1000);
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: localTz,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(d);
+    });
+  }, [pinnedOffsets, now, localTz]);
 
   const sortedLocations = useMemo(() => sortByTimezone(locations), [locations]);
 
@@ -302,24 +317,23 @@ const Index = () => {
     const touchDuration = Date.now() - touchStartRef.current.time;
     
     if (!wasDrag && touchDuration < 300) {
-      // It was a tap — pin at touch position
-      const touch = e.changedTouches[0];
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const rawOffset = (x - scrolledNowLineX) / HOUR_WIDTH;
-      const snapped = snapToQuarter(rawOffset, now);
-      
-      const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - snapped) < 0.01);
-      if (existingIdx !== -1) {
-        setPinnedOffsets(prev => prev.filter((_, i) => i !== existingIdx));
-      } else if (pinnedOffsets.length < 5) {
-        setPinnedOffsets(prev => [...prev, snapped]);
+      if (selectedPinIndex != null) {
+        setSelectedPinIndex(null);
+      } else {
+        const touch = e.changedTouches[0];
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const rawOffset = (x - scrolledNowLineX) / HOUR_WIDTH;
+        const snapped = snapToQuarter(rawOffset, now);
+        if (pinnedOffsets.length < 5) {
+          setPinnedOffsets(prev => [...prev, snapped]);
+        }
       }
     }
     
     touchStartRef.current = null;
     setIsDragging(false);
-  }, [didDrag, scrolledNowLineX, now, pinnedOffsets]);
+  }, [didDrag, scrolledNowLineX, now, pinnedOffsets, selectedPinIndex]);
 
   const resetScroll = useCallback(() => {
     setScrollOffsetHours(0);
@@ -330,20 +344,72 @@ const Index = () => {
   }, []);
 
   const handleClick = useCallback(() => {
-    if (didDrag) return; // Don't pin if we were dragging
-    if (hoverOffsetHours == null) return;
-    const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
-    if (existingIdx !== -1) {
-      setPinnedOffsets(pinnedOffsets.filter((_, i) => i !== existingIdx));
-    } else {
-      if (pinnedOffsets.length >= 5) return;
-      setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
+    if (didDrag) return;
+    if (selectedPinIndex != null) {
+      setSelectedPinIndex(null);
+      return;
     }
-  }, [hoverOffsetHours, pinnedOffsets, didDrag]);
+    if (hoverOffsetHours == null) return;
+    if (pinnedOffsets.length >= 5) return;
+    setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
+  }, [hoverOffsetHours, pinnedOffsets, didDrag, selectedPinIndex]);
 
   const removeOption = useCallback((index: number) => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  // Pin lozenge drag handlers (touch)
+  const handlePinTouchStart = useCallback((index: number, e: React.TouchEvent) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setSelectedPinIndex(index);
+    setDraggingPinIndex(index);
+    dragPinRef.current = { startX: touch.clientX, originalOffset: pinnedOffsets[index] };
+  }, [pinnedOffsets]);
+
+  const handlePinTouchMove = useCallback((e: React.TouchEvent) => {
+    if (draggingPinIndex == null || !dragPinRef.current) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragPinRef.current.startX;
+    const newOffset = dragPinRef.current.originalOffset + dx / HOUR_WIDTH;
+    const snapped = snapToQuarter(newOffset, now);
+    setPinnedOffsets(prev => prev.map((o, i) => i === draggingPinIndex ? snapped : o));
+  }, [draggingPinIndex, now]);
+
+  const handlePinTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    setDraggingPinIndex(null);
+    dragPinRef.current = null;
+  }, []);
+
+  // Pin lozenge drag handlers (mouse)
+  const handlePinMouseDown = useCallback((index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedPinIndex(index);
+    setDraggingPinIndex(index);
+    dragPinRef.current = { startX: e.clientX, originalOffset: pinnedOffsets[index] };
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!dragPinRef.current) return;
+      const dx = ev.clientX - dragPinRef.current.startX;
+      const newOffset = dragPinRef.current.originalOffset + dx / HOUR_WIDTH;
+      const snapped = snapToQuarter(newOffset, now);
+      setPinnedOffsets(prev => prev.map((o, i) => i === index ? snapped : o));
+    };
+
+    const handleUp = () => {
+      setDraggingPinIndex(null);
+      dragPinRef.current = null;
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }, [pinnedOffsets, now]);
 
   const handleCopyTimes = useCallback(() => {
     if (!pinnedOptions) return;
@@ -435,7 +501,7 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <p className="text-[10px] text-muted-foreground/50 mb-2">{isMobile ? 'Swipe to navigate · Tap to pin' : 'Scroll to navigate dates'}</p>
+            <p className="text-[10px] text-muted-foreground/50 mb-2">{isMobile ? 'Swipe to navigate · Tap to pin · Hold marker to drag' : 'Scroll to navigate · Click to pin · Drag marker to move'}</p>
 
             <div
               ref={containerRef}
@@ -464,18 +530,34 @@ const Index = () => {
                   <span className="text-[9px] text-now/70 mt-0.5">now</span>
                 </div>
 
-                {/* Pinned label (show last pinned when not hovering) */}
-                {pinnedX != null && pinnedLocalTime && hoverX == null && (
-                  <div
-                    className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                    style={{ left: `${pinnedX}px`, transform: "translateX(-50%)" }}
-                  >
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                      <span className="text-xs font-mono font-bold text-hover-line">{pinnedLocalTime}</span>
-                      <span className="text-[9px] text-hover-line/70">pinned</span>
+                {/* Pin lozenges — one per pin, always visible */}
+                {pinnedXPositions.map((px, i) => {
+                  const isSelected = selectedPinIndex === i;
+                  const isDragActive = draggingPinIndex === i;
+                  const time = pinnedLocalTimes[i];
+                  if (!time) return null;
+                  return (
+                    <div
+                      key={i}
+                      className={`absolute top-0 z-30 flex flex-col items-center ${isDragActive ? 'cursor-grabbing' : 'cursor-grab'}`}
+                      style={{ left: `${px}px`, transform: "translateX(-50%)" }}
+                      onTouchStart={(e) => handlePinTouchStart(i, e)}
+                      onTouchMove={handlePinTouchMove}
+                      onTouchEnd={handlePinTouchEnd}
+                      onMouseDown={(e) => handlePinMouseDown(i, e)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedPinIndex(isSelected ? null : i); }}
+                    >
+                      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono font-bold transition-colors ${
+                        isSelected
+                          ? 'bg-hover-line/20 border-hover-line/40 text-hover-line'
+                          : 'bg-muted/40 border-muted text-muted-foreground/50'
+                      }`}>
+                        <span>{time}</span>
+                        {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
 
                 {/* Hover label */}
                 {snappedHoverX != null && hoverLocalTime && (
@@ -517,7 +599,9 @@ const Index = () => {
               {pinnedXPositions.map((px, i) => (
                 <div
                   key={i}
-                  className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
+                  className={`absolute top-10 bottom-0 z-10 pointer-events-none ${
+                    selectedPinIndex === i ? 'w-1 bg-hover-line/70' : 'w-0.5 bg-hover-line/50'
+                  }`}
                   style={{ left: `${px}px` }}
                 />
               ))}
