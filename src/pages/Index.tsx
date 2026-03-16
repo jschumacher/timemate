@@ -180,6 +180,18 @@ const Index = () => {
     }).format(d);
   }, [pinnedOffsetHours, now, localTz]);
 
+  const pinnedLocalTimes = useMemo(() => {
+    return pinnedOffsets.map(offset => {
+      const d = new Date(now.getTime() + offset * 60 * 60 * 1000);
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: localTz,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(d);
+    });
+  }, [pinnedOffsets, now, localTz]);
+
   const sortedLocations = useMemo(() => sortByTimezone(locations), [locations]);
 
   // Build summary for each pinned option
