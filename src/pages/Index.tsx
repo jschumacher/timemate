@@ -370,33 +370,58 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-6 sm:pt-10 pb-6">
-        {/* Header row: logo + search */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        {/* Header row: logo + date (mobile) or logo + search (desktop) */}
+        <div className="flex items-center justify-between mb-3 sm:mb-6">
           <div className="flex items-center gap-1">
             <img src="/favicon.png" alt="Timecheck logo" className="h-14 w-14 -ml-3" />
             <h1 className="text-2xl font-bold tracking-tight">Timecheck</h1>
           </div>
-          <div className="w-full sm:w-72">
-            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
-          </div>
-        </div>
-
-         {/* Animated date display */}
-         <div className="mb-6 flex items-baseline gap-1.5">
-           <RollingText text={viewingDate.day} className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground" />
-           <RollingText text={viewingDate.month} className="text-lg font-semibold text-foreground/80" />
-           <RollingText text={viewingDate.year} className="text-lg font-semibold text-foreground/80" />
-          <span className="text-sm text-muted-foreground ml-1">{viewingDate.weekday}</span>
-          {Math.abs(scrollOffsetHours) > 1 && (
-            <button
-              onClick={resetScroll}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-2"
-            >
-              <RotateCcw className="h-3 w-3" />
-              Today
-            </button>
+          {/* Date on mobile, search on desktop */}
+          {isMobile ? (
+            <div className="flex items-baseline gap-1">
+              <RollingText text={viewingDate.day} className="text-xl font-bold tracking-tight text-foreground" />
+              <RollingText text={viewingDate.month} className="text-xs font-semibold text-foreground/80" />
+              {Math.abs(scrollOffsetHours) > 1 && (
+                <button
+                  onClick={resetScroll}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-1"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="w-72">
+              <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
+            </div>
           )}
         </div>
+
+        {/* Search field on mobile — full width to match timeline */}
+        {isMobile && (
+          <div className="mb-3">
+            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
+          </div>
+        )}
+
+        {/* Animated date display — desktop only */}
+        {!isMobile && (
+          <div className="mb-6 flex items-baseline gap-1.5">
+            <RollingText text={viewingDate.day} className="text-4xl font-bold tracking-tight text-foreground" />
+            <RollingText text={viewingDate.month} className="text-lg font-semibold text-foreground/80" />
+            <RollingText text={viewingDate.year} className="text-lg font-semibold text-foreground/80" />
+            <span className="text-sm text-muted-foreground ml-1">{viewingDate.weekday}</span>
+            {Math.abs(scrollOffsetHours) > 1 && (
+              <button
+                onClick={resetScroll}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-2"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Today
+              </button>
+            )}
+          </div>
+        )}
 
         {locations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center">
