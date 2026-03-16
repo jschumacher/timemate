@@ -231,7 +231,7 @@ const Index = () => {
     } else {
       setHoverX(null);
     }
-  }, [isDragging]);
+  }, [isDragging, timelineStartX]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return;
