@@ -411,7 +411,7 @@ const Index = () => {
               </div>
 
               {/* Timezone rows */}
-              <div className="space-y-4">
+              <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
                 {sortedLocations.map((loc) => (
                   <TimezoneRow
                     key={`${loc.city}-${loc.timezone}`}
@@ -421,6 +421,7 @@ const Index = () => {
                     hoverOffsetHours={hoverOffsetHours}
                     pinnedOffsetHours={pinnedOffsetHours}
                     scrollOffsetHours={scrollOffsetHours}
+                    compact={isMobile}
                   />
                 ))}
               </div>
