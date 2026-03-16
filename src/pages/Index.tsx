@@ -457,7 +457,7 @@ const Index = () => {
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Pinned times · {pinnedOptions.length} option{pinnedOptions.length > 1 ? "s" : ""}
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       onClick={handleCopyTimes}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
