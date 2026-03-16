@@ -410,7 +410,7 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <p className="text-[10px] text-muted-foreground/50 mb-2">Scroll to navigate dates</p>
+            <p className="text-[10px] text-muted-foreground/50 mb-2">{isMobile ? 'Swipe to navigate · Tap to pin' : 'Scroll to navigate dates'}</p>
 
             <div
               ref={containerRef}
