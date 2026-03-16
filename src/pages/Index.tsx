@@ -453,7 +453,7 @@ const Index = () => {
             {/* Pinned options panel */}
             {pinnedOptions && pinnedOptions.length > 0 && (
               <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 border-b border-border bg-muted/30">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Pinned times · {pinnedOptions.length} option{pinnedOptions.length > 1 ? "s" : ""}
                   </span>
