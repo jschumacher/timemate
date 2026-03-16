@@ -2,13 +2,22 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
-import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
+import {
+  TimezoneRow,
+  NOW_PIXEL_OFFSET, NOW_PIXEL_OFFSET_MOBILE,
+  HOUR_WIDTH,
+  TIMELINE_START_X, TIMELINE_START_X_MOBILE,
+} from "@/components/TimezoneRow";
 import { RollingText } from "@/components/RollingText";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const NOW_LINE_X = TIMELINE_START_X + (NOW_PIXEL_OFFSET - TIMELINE_START_X);
-
+const getNowLineX = (mobile: boolean) => {
+  const startX = mobile ? TIMELINE_START_X_MOBILE : TIMELINE_START_X;
+  const nowOffset = mobile ? NOW_PIXEL_OFFSET_MOBILE : NOW_PIXEL_OFFSET;
+  return startX + (nowOffset - startX);
+};
 function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
   return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
 }
@@ -78,6 +87,9 @@ function formatDateAtOffset(timezone: string, now: Date, offsetHours: number): s
 }
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  const timelineStartX = isMobile ? TIMELINE_START_X_MOBILE : TIMELINE_START_X;
+  const nowLineX = getNowLineX(isMobile);
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCities = useMemo(() => parseCitiesFromUrl(searchParams.get("tz")), []);
   const urlPins = useMemo(() => {
@@ -121,7 +133,7 @@ const Index = () => {
   const localTime = formatTime(localTz);
 
   // Hover offset accounts for scroll: the pixel position maps to a different time when scrolled
-  const scrolledNowLineX = NOW_LINE_X + scrollOffsetHours * HOUR_WIDTH;
+  const scrolledNowLineX = nowLineX + scrollOffsetHours * HOUR_WIDTH;
   const rawHoverOffsetHours = hoverX != null ? (hoverX - scrolledNowLineX) / HOUR_WIDTH : null;
   const hoverOffsetHours = useMemo(() => {
     if (rawHoverOffsetHours == null) return null;
@@ -214,23 +226,23 @@ const Index = () => {
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+    if (x >= timelineStartX && x <= rect.width - 112) {
       setHoverX(x);
     } else {
       setHoverX(null);
     }
-  }, [isDragging]);
+  }, [isDragging, timelineStartX]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+    if (x >= timelineStartX && x <= rect.width - (isMobile ? 68 : 112)) {
       dragStartRef.current = { x: e.clientX, scrollAtStart: scrollOffsetHours };
       setDidDrag(false);
       e.preventDefault();
     }
-  }, [scrollOffsetHours]);
+  }, [scrollOffsetHours, timelineStartX, isMobile]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -304,21 +316,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-5xl mx-auto px-4 pt-10 pb-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-6 sm:pt-10 pb-6">
         {/* Header row: logo + search */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-1">
-            <img src="/favicon.png" alt="Welltimed logo" className="h-14 w-14 -ml-3" />
-            <h1 className="text-2xl font-bold tracking-tight">Welltimed</h1>
+            <img src="/favicon.png" alt="Timecheck logo" className="h-14 w-14 -ml-3" />
+            <h1 className="text-2xl font-bold tracking-tight">Timecheck</h1>
           </div>
-          <div className="w-72">
+          <div className="w-full sm:w-72">
             <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
           </div>
         </div>
 
          {/* Animated date display */}
          <div className="mb-6 flex items-baseline gap-1.5">
-           <RollingText text={viewingDate.day} className="text-4xl font-bold tracking-tight text-foreground" />
+           <RollingText text={viewingDate.day} className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground" />
            <RollingText text={viewingDate.month} className="text-lg font-semibold text-foreground/80" />
            <RollingText text={viewingDate.year} className="text-lg font-semibold text-foreground/80" />
           <span className="text-sm text-muted-foreground ml-1">{viewingDate.weekday}</span>
@@ -334,7 +346,7 @@ const Index = () => {
         </div>
 
         {locations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center">
             <Globe className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground text-sm">
               Search for a city to get started
@@ -399,7 +411,7 @@ const Index = () => {
               </div>
 
               {/* Timezone rows */}
-              <div className="space-y-4">
+              <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
                 {sortedLocations.map((loc) => (
                   <TimezoneRow
                     key={`${loc.city}-${loc.timezone}`}
@@ -409,6 +421,7 @@ const Index = () => {
                     hoverOffsetHours={hoverOffsetHours}
                     pinnedOffsetHours={pinnedOffsetHours}
                     scrollOffsetHours={scrollOffsetHours}
+                    compact={isMobile}
                   />
                 ))}
               </div>
@@ -440,11 +453,11 @@ const Index = () => {
             {/* Pinned options panel */}
             {pinnedOptions && pinnedOptions.length > 0 && (
               <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 border-b border-border bg-muted/30">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Pinned times · {pinnedOptions.length} option{pinnedOptions.length > 1 ? "s" : ""}
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       onClick={handleCopyTimes}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
@@ -471,7 +484,7 @@ const Index = () => {
 
                 <div className="flex flex-wrap gap-0 divide-x divide-border/50">
                   {pinnedOptions.map((opt, optIdx) => (
-                    <div key={optIdx} className="px-5 py-3 min-w-[280px]">
+                    <div key={optIdx} className="px-3 sm:px-5 py-3 min-w-0 sm:min-w-[280px] w-full sm:w-auto">
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <span className="text-xs font-semibold text-primary">

@@ -9,22 +9,31 @@ interface TimezoneRowProps {
   hoverOffsetHours?: number | null;
   pinnedOffsetHours?: number | null;
   scrollOffsetHours?: number;
+  compact?: boolean;
 }
 
 export const TOTAL_HOURS = 720; // 30 days
 export const HOURS_BEFORE_NOW = 168; // 7 days before
 export const HOUR_WIDTH = 28;
 
-// Layout constants used by the shared marker lines in Index
-export const LEFT_INFO_WIDTH = 180; // px
-export const COLUMN_GAP = 12; // matches `gap-3`
+// Layout constants — desktop
+export const LEFT_INFO_WIDTH = 180;
+export const COLUMN_GAP = 12;
+
+// Layout constants — mobile
+export const LEFT_INFO_WIDTH_MOBILE = 100;
+export const COLUMN_GAP_MOBILE = 8;
 
 // "Now" marker X position in the overall rows container
 export const NOW_PIXEL_OFFSET = 300;
+export const NOW_PIXEL_OFFSET_MOBILE = 160;
 
 // Derived positions
 export const TIMELINE_START_X = LEFT_INFO_WIDTH + COLUMN_GAP;
 export const NOW_IN_TIMELINE_X = NOW_PIXEL_OFFSET - TIMELINE_START_X;
+
+export const TIMELINE_START_X_MOBILE = LEFT_INFO_WIDTH_MOBILE + COLUMN_GAP_MOBILE;
+export const NOW_IN_TIMELINE_X_MOBILE = NOW_PIXEL_OFFSET_MOBILE - TIMELINE_START_X_MOBILE;
 
 const PERIOD_CLASS: Record<HourPeriod, string> = {
   work: "bg-timeline-work",
@@ -32,10 +41,11 @@ const PERIOD_CLASS: Record<HourPeriod, string> = {
   night: "bg-timeline-night",
 };
 
-export function getTimelineTranslateX(now: Date, scrollOffsetHours: number = 0): number {
+export function getTimelineTranslateX(now: Date, scrollOffsetHours: number = 0, mobile: boolean = false): number {
   const minutesFraction = now.getMinutes() / 60;
   const nowPosition = (HOURS_BEFORE_NOW + minutesFraction) * HOUR_WIDTH;
-  return -nowPosition + NOW_IN_TIMELINE_X + scrollOffsetHours * HOUR_WIDTH;
+  const nowInTimeline = mobile ? NOW_IN_TIMELINE_X_MOBILE : NOW_IN_TIMELINE_X;
+  return -nowPosition + nowInTimeline + scrollOffsetHours * HOUR_WIDTH;
 }
 
 function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): string {
@@ -48,7 +58,7 @@ function formatTimeAtOffset(timezone: string, now: Date, offsetHours: number): s
   }).format(d);
 }
 
-export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours, scrollOffsetHours = 0 }: TimezoneRowProps) {
+export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffsetHours, scrollOffsetHours = 0, compact = false }: TimezoneRowProps) {
   const time = formatTime(city.timezone);
   const offset = getUtcOffset(city.timezone);
 
@@ -74,7 +84,7 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     return segs;
   }, [city.timezone, now]);
 
-  const translateX = getTimelineTranslateX(now, scrollOffsetHours);
+  const translateX = getTimelineTranslateX(now, scrollOffsetHours, compact);
 
   const hoverTimeLabel = useMemo(() => {
     if (hoverOffsetHours == null) return null;
@@ -86,18 +96,17 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
     return formatTimeAtOffset(city.timezone, now, pinnedOffsetHours);
   }, [pinnedOffsetHours, now, city.timezone]);
 
-  // Show pinned label if no hover, otherwise hover
   const displayLabel = hoverTimeLabel ?? pinnedTimeLabel;
 
   return (
     <div className="group relative">
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}>
         {/* Left info */}
-        <div className="flex items-center w-[180px] shrink-0">
-          <span className="text-base shrink-0">{city.flag}</span>
+        <div className={`flex items-center shrink-0 ${compact ? 'w-[100px]' : 'w-[180px]'}`}>
+          <span className={`shrink-0 ${compact ? 'text-sm' : 'text-base'}`}>{city.flag}</span>
           <div className="flex-1 min-w-0 ml-2">
-            <div className="text-xs text-muted-foreground leading-tight truncate">
-              {city.city} · {offset}
+            <div className={`text-muted-foreground leading-tight truncate ${compact ? 'text-[10px]' : 'text-xs'}`}>
+              {compact ? city.city : `${city.city} · ${offset}`}
             </div>
           </div>
           <button
@@ -139,11 +148,11 @@ export function TimezoneRow({ city, now, onRemove, hoverOffsetHours, pinnedOffse
         </div>
 
         {/* Hover/pinned time or current time */}
-        <div className="min-w-[100px] text-right shrink-0">
+        <div className={`text-right shrink-0 ${compact ? 'min-w-[60px]' : 'min-w-[100px]'}`}>
           {displayLabel != null ? (
-            <span className="font-bold text-lg text-foreground font-mono">{displayLabel}</span>
+            <span className={`font-bold text-foreground font-mono ${compact ? 'text-sm' : 'text-lg'}`}>{displayLabel}</span>
           ) : (
-            <span className="font-mono text-sm text-muted-foreground">{time}</span>
+            <span className={`font-mono text-muted-foreground ${compact ? 'text-xs' : 'text-sm'}`}>{time}</span>
           )}
         </div>
       </div>
