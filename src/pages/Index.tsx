@@ -421,6 +421,9 @@ const Index = () => {
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
               onWheel={handleWheel}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               {/* Line labels row */}
               <div className="relative h-10 mb-2">
