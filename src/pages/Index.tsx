@@ -115,6 +115,9 @@ const Index = () => {
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
   const touchStartRef = useRef<{ x: number; scrollAtStart: number; time: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedPinIndex, setSelectedPinIndex] = useState<number | null>(null);
+  const [draggingPinIndex, setDraggingPinIndex] = useState<number | null>(null);
+  const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
   const pinnedOffsetHours = pinnedOffsets.length > 0 ? pinnedOffsets[pinnedOffsets.length - 1] : null;
