@@ -226,7 +226,7 @@ const Index = () => {
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+    if (x >= timelineStartX && x <= rect.width - 112) {
       setHoverX(x);
     } else {
       setHoverX(null);
