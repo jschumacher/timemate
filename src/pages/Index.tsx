@@ -113,6 +113,7 @@ const Index = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [didDrag, setDidDrag] = useState(false);
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; scrollAtStart: number; time: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
@@ -268,6 +269,58 @@ const Index = () => {
     e.preventDefault();
   }, []);
 
+  // Touch handlers for mobile drag-to-scroll and tap-to-pin
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const touch = e.touches[0];
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    if (x >= timelineStartX) {
+      touchStartRef.current = { x: touch.clientX, scrollAtStart: scrollOffsetHours, time: Date.now() };
+      setDidDrag(false);
+    }
+  }, [scrollOffsetHours, timelineStartX]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || !containerRef.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    if (Math.abs(dx) > 5) {
+      setDidDrag(true);
+      setIsDragging(true);
+    }
+    const hoursShift = dx / HOUR_WIDTH;
+    setScrollOffsetHours(
+      Math.max(-168, Math.min(168, touchStartRef.current.scrollAtStart + hoursShift))
+    );
+    e.preventDefault();
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || !containerRef.current) return;
+    const wasDrag = didDrag;
+    const touchDuration = Date.now() - touchStartRef.current.time;
+    
+    if (!wasDrag && touchDuration < 300) {
+      // It was a tap — pin at touch position
+      const touch = e.changedTouches[0];
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const rawOffset = (x - scrolledNowLineX) / HOUR_WIDTH;
+      const snapped = snapToQuarter(rawOffset, now);
+      
+      const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - snapped) < 0.01);
+      if (existingIdx !== -1) {
+        setPinnedOffsets(prev => prev.filter((_, i) => i !== existingIdx));
+      } else if (pinnedOffsets.length < 5) {
+        setPinnedOffsets(prev => [...prev, snapped]);
+      }
+    }
+    
+    touchStartRef.current = null;
+    setIsDragging(false);
+  }, [didDrag, scrolledNowLineX, now, pinnedOffsets]);
+
   const resetScroll = useCallback(() => {
     setScrollOffsetHours(0);
   }, []);
@@ -357,7 +410,7 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <p className="text-[10px] text-muted-foreground/50 mb-2">Scroll to navigate dates</p>
+            <p className="text-[10px] text-muted-foreground/50 mb-2">{isMobile ? 'Swipe to navigate · Tap to pin' : 'Scroll to navigate dates'}</p>
 
             <div
               ref={containerRef}
@@ -368,6 +421,9 @@ const Index = () => {
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}
               onWheel={handleWheel}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               {/* Line labels row */}
               <div className="relative h-10 mb-2">
