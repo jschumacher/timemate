@@ -599,7 +599,9 @@ const Index = () => {
               {pinnedXPositions.map((px, i) => (
                 <div
                   key={i}
-                  className="absolute top-10 bottom-0 w-0.5 bg-hover-line/50 z-10 pointer-events-none"
+                  className={`absolute top-10 bottom-0 z-10 pointer-events-none ${
+                    selectedPinIndex === i ? 'w-1 bg-hover-line/70' : 'w-0.5 bg-hover-line/50'
+                  }`}
                   style={{ left: `${px}px` }}
                 />
               ))}
