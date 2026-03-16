@@ -2,13 +2,22 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
-import { TimezoneRow, NOW_PIXEL_OFFSET, HOUR_WIDTH, TIMELINE_START_X } from "@/components/TimezoneRow";
+import {
+  TimezoneRow,
+  NOW_PIXEL_OFFSET, NOW_PIXEL_OFFSET_MOBILE,
+  HOUR_WIDTH,
+  TIMELINE_START_X, TIMELINE_START_X_MOBILE,
+} from "@/components/TimezoneRow";
 import { RollingText } from "@/components/RollingText";
 import { CityTimezone, CITY_TIMEZONES, formatTime, getUtcOffsetMinutes } from "@/lib/timezone-data";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const NOW_LINE_X = TIMELINE_START_X + (NOW_PIXEL_OFFSET - TIMELINE_START_X);
-
+const getNowLineX = (mobile: boolean) => {
+  const startX = mobile ? TIMELINE_START_X_MOBILE : TIMELINE_START_X;
+  const nowOffset = mobile ? NOW_PIXEL_OFFSET_MOBILE : NOW_PIXEL_OFFSET;
+  return startX + (nowOffset - startX);
+};
 function sortByTimezone(cities: CityTimezone[]): CityTimezone[] {
   return [...cities].sort((a, b) => getUtcOffsetMinutes(a.timezone) - getUtcOffsetMinutes(b.timezone));
 }
