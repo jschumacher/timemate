@@ -237,7 +237,7 @@ const Index = () => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    if (x >= TIMELINE_START_X && x <= rect.width - 112) {
+    if (x >= timelineStartX && x <= rect.width - (isMobile ? 68 : 112)) {
       dragStartRef.current = { x: e.clientX, scrollAtStart: scrollOffsetHours };
       setDidDrag(false);
       e.preventDefault();
