@@ -346,7 +346,7 @@ const Index = () => {
         </div>
 
         {locations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center">
             <Globe className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground text-sm">
               Search for a city to get started
