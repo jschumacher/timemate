@@ -344,16 +344,15 @@ const Index = () => {
   }, []);
 
   const handleClick = useCallback(() => {
-    if (didDrag) return; // Don't pin if we were dragging
-    if (hoverOffsetHours == null) return;
-    const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - hoverOffsetHours) < 0.01);
-    if (existingIdx !== -1) {
-      setPinnedOffsets(pinnedOffsets.filter((_, i) => i !== existingIdx));
-    } else {
-      if (pinnedOffsets.length >= 5) return;
-      setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
+    if (didDrag) return;
+    if (selectedPinIndex != null) {
+      setSelectedPinIndex(null);
+      return;
     }
-  }, [hoverOffsetHours, pinnedOffsets, didDrag]);
+    if (hoverOffsetHours == null) return;
+    if (pinnedOffsets.length >= 5) return;
+    setPinnedOffsets([...pinnedOffsets, hoverOffsetHours]);
+  }, [hoverOffsetHours, pinnedOffsets, didDrag, selectedPinIndex]);
 
   const removeOption = useCallback((index: number) => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
