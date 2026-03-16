@@ -113,6 +113,7 @@ const Index = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [didDrag, setDidDrag] = useState(false);
   const dragStartRef = useRef<{ x: number; scrollAtStart: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; scrollAtStart: number; time: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
