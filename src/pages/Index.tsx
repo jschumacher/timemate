@@ -317,24 +317,23 @@ const Index = () => {
     const touchDuration = Date.now() - touchStartRef.current.time;
     
     if (!wasDrag && touchDuration < 300) {
-      // It was a tap — pin at touch position
-      const touch = e.changedTouches[0];
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const rawOffset = (x - scrolledNowLineX) / HOUR_WIDTH;
-      const snapped = snapToQuarter(rawOffset, now);
-      
-      const existingIdx = pinnedOffsets.findIndex((o) => Math.abs(o - snapped) < 0.01);
-      if (existingIdx !== -1) {
-        setPinnedOffsets(prev => prev.filter((_, i) => i !== existingIdx));
-      } else if (pinnedOffsets.length < 5) {
-        setPinnedOffsets(prev => [...prev, snapped]);
+      if (selectedPinIndex != null) {
+        setSelectedPinIndex(null);
+      } else {
+        const touch = e.changedTouches[0];
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const rawOffset = (x - scrolledNowLineX) / HOUR_WIDTH;
+        const snapped = snapToQuarter(rawOffset, now);
+        if (pinnedOffsets.length < 5) {
+          setPinnedOffsets(prev => [...prev, snapped]);
+        }
       }
     }
     
     touchStartRef.current = null;
     setIsDragging(false);
-  }, [didDrag, scrolledNowLineX, now, pinnedOffsets]);
+  }, [didDrag, scrolledNowLineX, now, pinnedOffsets, selectedPinIndex]);
 
   const resetScroll = useCallback(() => {
     setScrollOffsetHours(0);
