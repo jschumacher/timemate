@@ -530,18 +530,34 @@ const Index = () => {
                   <span className="text-[9px] text-now/70 mt-0.5">now</span>
                 </div>
 
-                {/* Pinned label (show last pinned when not hovering) */}
-                {pinnedX != null && pinnedLocalTime && hoverX == null && (
-                  <div
-                    className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
-                    style={{ left: `${pinnedX}px`, transform: "translateX(-50%)" }}
-                  >
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                      <span className="text-xs font-mono font-bold text-hover-line">{pinnedLocalTime}</span>
-                      <span className="text-[9px] text-hover-line/70">pinned</span>
+                {/* Pin lozenges — one per pin, always visible */}
+                {pinnedXPositions.map((px, i) => {
+                  const isSelected = selectedPinIndex === i;
+                  const isDragActive = draggingPinIndex === i;
+                  const time = pinnedLocalTimes[i];
+                  if (!time) return null;
+                  return (
+                    <div
+                      key={i}
+                      className={`absolute top-0 z-30 flex flex-col items-center ${isDragActive ? 'cursor-grabbing' : 'cursor-grab'}`}
+                      style={{ left: `${px}px`, transform: "translateX(-50%)" }}
+                      onTouchStart={(e) => handlePinTouchStart(i, e)}
+                      onTouchMove={handlePinTouchMove}
+                      onTouchEnd={handlePinTouchEnd}
+                      onMouseDown={(e) => handlePinMouseDown(i, e)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedPinIndex(isSelected ? null : i); }}
+                    >
+                      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono font-bold transition-colors ${
+                        isSelected
+                          ? 'bg-hover-line/20 border-hover-line/40 text-hover-line'
+                          : 'bg-muted/40 border-muted text-muted-foreground/50'
+                      }`}>
+                        <span>{time}</span>
+                        {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
 
                 {/* Hover label */}
                 {snappedHoverX != null && hoverLocalTime && (
