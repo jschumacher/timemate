@@ -358,6 +358,59 @@ const Index = () => {
     setPinnedOffsets((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  // Pin lozenge drag handlers (touch)
+  const handlePinTouchStart = useCallback((index: number, e: React.TouchEvent) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setSelectedPinIndex(index);
+    setDraggingPinIndex(index);
+    dragPinRef.current = { startX: touch.clientX, originalOffset: pinnedOffsets[index] };
+  }, [pinnedOffsets]);
+
+  const handlePinTouchMove = useCallback((e: React.TouchEvent) => {
+    if (draggingPinIndex == null || !dragPinRef.current) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragPinRef.current.startX;
+    const newOffset = dragPinRef.current.originalOffset + dx / HOUR_WIDTH;
+    const snapped = snapToQuarter(newOffset, now);
+    setPinnedOffsets(prev => prev.map((o, i) => i === draggingPinIndex ? snapped : o));
+  }, [draggingPinIndex, now]);
+
+  const handlePinTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    setDraggingPinIndex(null);
+    dragPinRef.current = null;
+  }, []);
+
+  // Pin lozenge drag handlers (mouse)
+  const handlePinMouseDown = useCallback((index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedPinIndex(index);
+    setDraggingPinIndex(index);
+    dragPinRef.current = { startX: e.clientX, originalOffset: pinnedOffsets[index] };
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!dragPinRef.current) return;
+      const dx = ev.clientX - dragPinRef.current.startX;
+      const newOffset = dragPinRef.current.originalOffset + dx / HOUR_WIDTH;
+      const snapped = snapToQuarter(newOffset, now);
+      setPinnedOffsets(prev => prev.map((o, i) => i === index ? snapped : o));
+    };
+
+    const handleUp = () => {
+      setDraggingPinIndex(null);
+      dragPinRef.current = null;
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }, [pinnedOffsets, now]);
+
   const handleCopyTimes = useCallback(() => {
     if (!pinnedOptions) return;
     const lines = pinnedOptions.map((opt, i) => {
