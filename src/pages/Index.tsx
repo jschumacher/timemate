@@ -564,8 +564,8 @@ const Index = () => {
                   );
                 })}
 
-                {/* Hover label */}
-                {snappedHoverX != null && hoverLocalTime && (
+                {/* Hover label — only when not hovering a pin marker */}
+                {snappedHoverX != null && hoverLocalTime && hoveredPinIndex == null && (
                   <div
                     className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
                     style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
