@@ -619,6 +619,7 @@ const Index = () => {
                 />
               )}
             </div>
+            <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">{isMobile ? 'Swipe to navigate · Tap to pin · Hold marker to drag' : 'Scroll to navigate · Click to pin · Drag marker to move'}</p>
 
             {/* Pinned options panel */}
             {pinnedOptions && pinnedOptions.length > 0 && (
