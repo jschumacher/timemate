@@ -215,6 +215,7 @@ const Index = () => {
     if (locations.length >= 5) return;
     if (locations.some((l) => l.city === city.city && l.timezone === city.timezone)) return;
     setLocations([...locations, city]);
+    setShowSearch(false);
   }
 
   function removeLocation(city: CityTimezone) {
