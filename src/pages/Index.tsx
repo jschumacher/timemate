@@ -460,9 +460,7 @@ const Index = () => {
               )}
             </div>
           ) : (
-            <div className="w-72">
-              <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
-            </div>
+            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} compact />
           )}
         </div>
 
