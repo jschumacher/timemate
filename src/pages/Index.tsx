@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Clock, Globe, Copy, Link, Check, X, Plus, RotateCcw } from "lucide-react";
 import { LocationSearch } from "@/components/LocationSearch";
 import {
@@ -469,9 +469,10 @@ const Index = () => {
                       <Plus className="h-4 w-4" />
                     </button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="px-4 pb-8 pt-3 min-h-[60vh] rounded-t-2xl">
-                    <SheetTitle className="text-sm font-semibold mb-3">Add a city</SheetTitle>
-                    <LocationSearch onAdd={(city) => { addLocation(city); setMobileSheetOpen(false); }} disabled={locations.length >= 5} />
+                  <SheetContent side="bottom" className="px-4 pb-8 pt-3 rounded-t-2xl">
+                    <div className="my-24">
+                      <LocationSearch onAdd={(city) => { addLocation(city); setMobileSheetOpen(false); }} disabled={locations.length >= 5} />
+                    </div>
                   </SheetContent>
                 </Sheet>
               )}
