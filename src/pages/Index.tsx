@@ -121,6 +121,7 @@ const Index = () => {
   const [hoveredPinIndex, setHoveredPinIndex] = useState<number | null>(null);
   const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
   const [showSearch, setShowSearch] = useState(() => locations.length === 0);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   // Keep backward compat: expose first pinned offset for timeline row display
   const pinnedOffsetHours = pinnedOffsets.length > 0 ? pinnedOffsets[pinnedOffsets.length - 1] : null;
