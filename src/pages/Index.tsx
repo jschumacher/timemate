@@ -502,7 +502,7 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <p className="text-[10px] text-muted-foreground/50 mb-2">{isMobile ? 'Swipe to navigate · Tap to pin · Hold marker to drag' : 'Scroll to navigate · Click to pin · Drag marker to move'}</p>
+            
 
             <div
               ref={containerRef}
