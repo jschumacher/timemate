@@ -439,7 +439,7 @@ const Index = () => {
   const pinnedX = pinnedOffsetHours != null ? scrolledNowLineX + pinnedOffsetHours * HOUR_WIDTH : null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen bg-background text-foreground transition-transform duration-500 origin-top ${mobileSheetOpen ? 'scale-[0.96] rounded-t-2xl overflow-hidden' : ''}`}>
       <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-6 sm:pt-10 pb-6">
         {/* Header row: logo + date (mobile) or logo + search (desktop) */}
         <div className="flex items-center justify-between mb-3 sm:mb-6">
@@ -469,7 +469,7 @@ const Index = () => {
                       <Plus className="h-4 w-4" />
                     </button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="px-4 pb-8 pt-4">
+                  <SheetContent side="bottom" className="px-4 pb-8 pt-3 min-h-[60vh] rounded-t-2xl">
                     <SheetTitle className="text-sm font-semibold mb-3">Add a city</SheetTitle>
                     <LocationSearch onAdd={(city) => { addLocation(city); setMobileSheetOpen(false); }} disabled={locations.length >= 5} />
                   </SheetContent>
