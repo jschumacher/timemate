@@ -476,6 +476,10 @@ const Index = () => {
                 </Sheet>
               )}
             </div>
+          ) : (
+            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} compact />
+          )}
+        </div>
 
         {/* Animated date display — desktop only */}
         {!isMobile && (
