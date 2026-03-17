@@ -119,6 +119,7 @@ const Index = () => {
   const [draggingPinIndex, setDraggingPinIndex] = useState<number | null>(null);
   const [hoveredPinIndex, setHoveredPinIndex] = useState<number | null>(null);
   const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
+  const [showSearch, setShowSearch] = useState(() => locations.length === 0);
 
   // Keep backward compat: expose first pinned offset for timeline row display
   const pinnedOffsetHours = pinnedOffsets.length > 0 ? pinnedOffsets[pinnedOffsets.length - 1] : null;
@@ -214,6 +215,7 @@ const Index = () => {
     if (locations.length >= 5) return;
     if (locations.some((l) => l.city === city.city && l.timezone === city.timezone)) return;
     setLocations([...locations, city]);
+    setShowSearch(false);
   }
 
   function removeLocation(city: CityTimezone) {
