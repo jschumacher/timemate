@@ -449,29 +449,33 @@ const Index = () => {
           </div>
           {/* Date on mobile, search on desktop */}
           {isMobile ? (
-            <div className="flex items-baseline gap-1">
-              <RollingText text={viewingDate.day} className="text-xl font-bold tracking-tight text-foreground" />
-              <RollingText text={viewingDate.month} className="text-xs font-semibold text-foreground/80" />
-              {Math.abs(scrollOffsetHours) > 1 && (
-                <button
-                  onClick={resetScroll}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-1"
-                >
-                  <RotateCcw className="h-2.5 w-2.5" />
-                </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-1">
+                <RollingText text={viewingDate.day} className="text-xl font-bold tracking-tight text-foreground" />
+                <RollingText text={viewingDate.month} className="text-xs font-semibold text-foreground/80" />
+                {Math.abs(scrollOffsetHours) > 1 && (
+                  <button
+                    onClick={resetScroll}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors ml-1"
+                  >
+                    <RotateCcw className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </div>
+              {locations.length < 5 && (
+                <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+                  <SheetTrigger asChild>
+                    <button className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground">
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="px-4 pb-8 pt-4">
+                    <SheetTitle className="text-sm font-semibold mb-3">Add a city</SheetTitle>
+                    <LocationSearch onAdd={(city) => { addLocation(city); setMobileSheetOpen(false); }} disabled={locations.length >= 5} />
+                  </SheetContent>
+                </Sheet>
               )}
             </div>
-          ) : (
-            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} compact />
-          )}
-        </div>
-
-        {/* Search field on mobile — full width to match timeline */}
-        {isMobile && (
-          <div className="mb-3">
-            <LocationSearch onAdd={addLocation} disabled={locations.length >= 5} />
-          </div>
-        )}
 
         {/* Animated date display — desktop only */}
         {!isMobile && (
