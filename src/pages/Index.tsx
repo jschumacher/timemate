@@ -557,7 +557,7 @@ const Index = () => {
                             ? 'bg-muted/60 border-muted-foreground/40 text-muted-foreground/80'
                             : 'bg-muted/40 border-muted text-muted-foreground/50'
                       }`}>
-                        <span>{time}</span>
+                        <span className="whitespace-nowrap">{time.replace(/ /g, '\u00A0')}</span>
                         {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
                       </div>
                     </div>
@@ -571,8 +571,8 @@ const Index = () => {
                     style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
                   >
                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                      <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
-                      <span className="text-[9px] text-hover-line/70">click to pin</span>
+                      <span className="text-xs font-mono font-bold text-hover-line whitespace-nowrap">{hoverLocalTime.replace(/ /g, '\u00A0')}</span>
+                      <span className="text-[9px] text-hover-line/70 whitespace-nowrap">click&nbsp;to&nbsp;pin</span>
                     </div>
                   </div>
                 )}
