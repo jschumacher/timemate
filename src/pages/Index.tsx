@@ -469,8 +469,8 @@ const Index = () => {
                       <Plus className="h-4 w-4" />
                     </button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="px-4 pb-8 pt-3 rounded-t-2xl">
-                    <div className="my-24">
+                  <SheetContent side="bottom" className="px-4 pb-[50px] pt-3 rounded-t-2xl">
+                    <div className="pt-[50px]">
                       <LocationSearch onAdd={(city) => { addLocation(city); setMobileSheetOpen(false); }} disabled={locations.length >= 5} />
                     </div>
                   </SheetContent>

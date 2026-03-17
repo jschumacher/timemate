@@ -57,6 +57,25 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
     const dragStartY = React.useRef<number | null>(null);
     const currentTranslateY = React.useRef(0);
 
+    // Adjust bottom position when virtual keyboard opens
+    React.useEffect(() => {
+      if (side !== "bottom") return;
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const onResize = () => {
+        const el = contentRef.current;
+        if (!el) return;
+        const offset = window.innerHeight - vv.height - vv.offsetTop;
+        el.style.bottom = `${Math.max(0, offset)}px`;
+      };
+      vv.addEventListener("resize", onResize);
+      vv.addEventListener("scroll", onResize);
+      return () => {
+        vv.removeEventListener("resize", onResize);
+        vv.removeEventListener("scroll", onResize);
+      };
+    }, [side]);
+
     const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
       dragStartY.current = e.touches[0].clientY;
       currentTranslateY.current = 0;
