@@ -82,7 +82,7 @@ export function LocationSearch({ onAdd, disabled, compact = false }: LocationSea
           disabled={disabled}
           placeholder={disabled ? "Max 5 locations" : "Add a city…"}
           className={`w-full pl-9 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all disabled:opacity-50 ${
-            compact ? "h-8 text-xs" : "h-10 text-sm"
+             compact ? "h-8 text-xs" : "h-10 text-base"
           }`}
         />
       </div>
