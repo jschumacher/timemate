@@ -117,6 +117,7 @@ const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedPinIndex, setSelectedPinIndex] = useState<number | null>(null);
   const [draggingPinIndex, setDraggingPinIndex] = useState<number | null>(null);
+  const [hoveredPinIndex, setHoveredPinIndex] = useState<number | null>(null);
   const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
@@ -545,12 +546,16 @@ const Index = () => {
                       onTouchMove={handlePinTouchMove}
                       onTouchEnd={handlePinTouchEnd}
                       onMouseDown={(e) => handlePinMouseDown(i, e)}
+                      onMouseEnter={() => { setHoveredPinIndex(i); setHoverX(null); }}
+                      onMouseLeave={() => setHoveredPinIndex(null)}
                       onClick={(e) => { e.stopPropagation(); setSelectedPinIndex(isSelected ? null : i); }}
                     >
                       <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono font-bold transition-colors ${
                         isSelected
                           ? 'bg-hover-line/20 border-hover-line/40 text-hover-line'
-                          : 'bg-muted/40 border-muted text-muted-foreground/50'
+                          : hoveredPinIndex === i
+                            ? 'bg-muted/60 border-muted-foreground/40 text-muted-foreground/80'
+                            : 'bg-muted/40 border-muted text-muted-foreground/50'
                       }`}>
                         <span>{time}</span>
                         {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
@@ -559,8 +564,8 @@ const Index = () => {
                   );
                 })}
 
-                {/* Hover label */}
-                {snappedHoverX != null && hoverLocalTime && (
+                {/* Hover label — only when not hovering a pin marker */}
+                {snappedHoverX != null && hoverLocalTime && hoveredPinIndex == null && (
                   <div
                     className="absolute top-0 pointer-events-none z-30 flex flex-col items-center"
                     style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
@@ -606,8 +611,8 @@ const Index = () => {
                 />
               ))}
 
-              {/* Hover cursor line */}
-              {snappedHoverX != null && (
+              {/* Hover cursor line — only when not hovering a pin marker */}
+              {snappedHoverX != null && hoveredPinIndex == null && (
                 <div
                   className="absolute top-10 bottom-0 w-px bg-hover-line/70 z-10 pointer-events-none"
                   style={{ left: `${snappedHoverX}px` }}
