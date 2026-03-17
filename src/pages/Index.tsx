@@ -117,6 +117,7 @@ const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedPinIndex, setSelectedPinIndex] = useState<number | null>(null);
   const [draggingPinIndex, setDraggingPinIndex] = useState<number | null>(null);
+  const [hoveredPinIndex, setHoveredPinIndex] = useState<number | null>(null);
   const dragPinRef = useRef<{ startX: number; originalOffset: number } | null>(null);
 
   // Keep backward compat: expose first pinned offset for timeline row display
