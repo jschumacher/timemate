@@ -571,8 +571,8 @@ const Index = () => {
                     style={{ left: `${snappedHoverX}px`, transform: "translateX(-50%)" }}
                   >
                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-hover-line/20 border border-hover-line/40">
-                      <span className="text-xs font-mono font-bold text-hover-line">{hoverLocalTime}</span>
-                      <span className="text-[9px] text-hover-line/70">click to pin</span>
+                      <span className="text-xs font-mono font-bold text-hover-line whitespace-nowrap">{hoverLocalTime.replace(/ /g, '\u00A0')}</span>
+                      <span className="text-[9px] text-hover-line/70 whitespace-nowrap">click&nbsp;to&nbsp;pin</span>
                     </div>
                   </div>
                 )}
