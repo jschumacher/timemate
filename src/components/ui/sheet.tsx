@@ -52,21 +52,80 @@ interface SheetContentProps
     VariantProps<typeof sheetVariants> {}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {side === "bottom" && (
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted-foreground/30" />
-        )}
-        {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, ...props }, ref) => {
+    const contentRef = React.useRef<HTMLDivElement | null>(null);
+    const dragStartY = React.useRef<number | null>(null);
+    const currentTranslateY = React.useRef(0);
+
+    const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
+      dragStartY.current = e.touches[0].clientY;
+      currentTranslateY.current = 0;
+      if (contentRef.current) {
+        contentRef.current.style.transition = "none";
+      }
+    }, []);
+
+    const handleTouchMove = React.useCallback((e: React.TouchEvent) => {
+      if (dragStartY.current === null) return;
+      const dy = e.touches[0].clientY - dragStartY.current;
+      const clamped = Math.max(0, dy);
+      currentTranslateY.current = clamped;
+      if (contentRef.current) {
+        contentRef.current.style.transform = `translateY(${clamped}px)`;
+      }
+    }, []);
+
+    const handleTouchEnd = React.useCallback(() => {
+      if (dragStartY.current === null) return;
+      dragStartY.current = null;
+      const el = contentRef.current;
+      if (!el) return;
+      el.style.transition = "transform 0.3s ease";
+      if (currentTranslateY.current > 80) {
+        // Dismiss: slide fully out then trigger close
+        el.style.transform = `translateY(100%)`;
+        // Find and click the close button to use Radix's built-in close
+        const closeBtn = el.querySelector("[data-sheet-close]") as HTMLElement;
+        if (closeBtn) setTimeout(() => closeBtn.click(), 200);
+      } else {
+        el.style.transform = "translateY(0)";
+      }
+    }, []);
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={(node) => {
+            contentRef.current = node;
+            if (typeof ref === "function") ref(node);
+            else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }}
+          className={cn(sheetVariants({ side }), className)}
+          {...props}
+        >
+          {side === "bottom" && (
+            <div
+              className="flex justify-center py-2 -mt-2 cursor-grab touch-none"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30" />
+            </div>
+          )}
+          {children}
+          <SheetPrimitive.Close
+            data-sheet-close
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
