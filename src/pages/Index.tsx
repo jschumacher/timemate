@@ -546,12 +546,16 @@ const Index = () => {
                       onTouchMove={handlePinTouchMove}
                       onTouchEnd={handlePinTouchEnd}
                       onMouseDown={(e) => handlePinMouseDown(i, e)}
+                      onMouseEnter={() => { setHoveredPinIndex(i); setHoverX(null); }}
+                      onMouseLeave={() => setHoveredPinIndex(null)}
                       onClick={(e) => { e.stopPropagation(); setSelectedPinIndex(isSelected ? null : i); }}
                     >
                       <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono font-bold transition-colors ${
                         isSelected
                           ? 'bg-hover-line/20 border-hover-line/40 text-hover-line'
-                          : 'bg-muted/40 border-muted text-muted-foreground/50'
+                          : hoveredPinIndex === i
+                            ? 'bg-muted/60 border-muted-foreground/40 text-muted-foreground/80'
+                            : 'bg-muted/40 border-muted text-muted-foreground/50'
                       }`}>
                         <span>{time}</span>
                         {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
