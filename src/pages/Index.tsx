@@ -557,7 +557,7 @@ const Index = () => {
                             ? 'bg-muted/60 border-muted-foreground/40 text-muted-foreground/80'
                             : 'bg-muted/40 border-muted text-muted-foreground/50'
                       }`}>
-                        <span>{time}</span>
+                        <span className="whitespace-nowrap">{time.replace(/ /g, '\u00A0')}</span>
                         {isSelected && <span className="text-[9px] font-normal text-hover-line/70">pinned</span>}
                       </div>
                     </div>
